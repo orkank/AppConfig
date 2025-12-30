@@ -182,7 +182,7 @@ Ideal for fetching a specific configuration setting.
 namespace Vendor\Module\ViewModel;
 
 use IDangerous\AppConfig\Api\AppConfigInterface;
-use Magento\Framework\Viewlement\Block\ArgumentInterface;
+use Magento\Framework\View\Element\Block\ArgumentInterface;
 
 class MyViewModel implements ArgumentInterface
 {
