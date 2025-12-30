@@ -102,12 +102,63 @@ Return all active key-value pairs formatted for the application.
 
 -   **URL**: `/V1/appconfig/config`
 -   **Method**: `GET`
+-   **Parameters**:
+    -   `appVersion` (optional): App version filter (e.g., "1.0.5")
+    -   `groupCode` (optional): Filter by group code
+
+**Response Format:**
+
+```json
+{
+  "DEFAULTS": {
+    "key_name": {
+      "key": "key_name",
+      "text": "text value",
+      "file": "https://example.com/media/file.jpg",
+      "json": {...},
+      "products": [
+        {
+          "id": 343079,
+          "sku": "A.314066",
+          "name": "Product Name",
+          "final_price": 45.50,
+          "regular_price": 50.00,
+          "currency": "TRY",
+          "is_in_stock": true,
+          "qty": 10.0
+        }
+      ],
+      "categories": [
+        {
+          "id": 32,
+          "name": "Category Name"
+        }
+      ],
+      "version": "1.0.0"
+    }
+  },
+  "GROUPS": {
+    "group_code": {
+      "name": "Group Name",
+      "description": "Group Description",
+      "version": "1.0.0",
+      "configs": {
+        "key_name": {...}
+      }
+    }
+  }
+}
+```
+
+**Note:** The `products` field includes price and stock information loaded from Magento catalog. All price values are in the store's base currency.
 
 #### Get Groups
 Return a list of available configuration groups.
 
 -   **URL**: `/V1/appconfig/groups`
 -   **Method**: `GET`
+-   **Parameters**:
+    -   `appVersion` (optional): App version filter (e.g., "1.0.5")
 
 ### GraphQL Support
 
@@ -132,10 +183,26 @@ query {
     groups: ["homepage_main"]
   ) {
     key
-    value
     group
     type
     version
+    text
+    file
+    json
+    products {
+      id
+      sku
+      name
+      final_price
+      regular_price
+      currency
+      is_in_stock
+      qty
+    }
+    categories {
+      id
+      name
+    }
   }
 }
 ```
@@ -146,9 +213,38 @@ query {
 query {
   appConfig(app_version: "2.1.0") {
     key
-    value
     group
     type
+    text
+    file
+    json
+    products {
+      id
+      sku
+      name
+      final_price
+      regular_price
+      currency
+      is_in_stock
+      qty
+    }
+    categories {
+      id
+      name
+    }
+  }
+}
+```
+
+**Example Query: Fetch JSON configuration**
+
+```graphql
+query {
+  appConfig(keys: ["BANNERS"]) {
+    key
+    group
+    type
+    json
   }
 }
 ```
@@ -161,15 +257,63 @@ query {
     "appConfig": [
       {
         "key": "homepage_banner",
-        "value": "https://example.com/media/banner.jpg",
         "group": "homepage_main",
         "type": "file",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "text": null,
+        "file": "https://example.com/media/appconfig/files/banner.jpg",
+        "json": null,
+        "products": null,
+        "categories": null
+      },
+      {
+        "key": "BANNERS",
+        "group": "homepage_main",
+        "type": "json",
+        "version": null,
+        "text": null,
+        "file": null,
+        "json": "[{\"QUERY\":\"Athica Yayınları\",\"TYPE\":\"PUBLISHER\",\"BANNER\":\"https://example.com/media/674x220-athica_blok_ar25.jpg\"}]",
+        "products": null,
+        "categories": null
+      },
+      {
+        "key": "WEEKLY_PROMO",
+        "group": "HOMEPAGE",
+        "type": "products",
+        "version": null,
+        "text": null,
+        "file": null,
+        "json": null,
+        "products": [
+          {
+            "id": 343079,
+            "sku": "A.314066",
+            "name": "Unutulmuş Kuşlar Göğü - 1 (Ciltli)",
+            "final_price": 45.50,
+            "regular_price": 50.00,
+            "currency": "TRY",
+            "is_in_stock": true,
+            "qty": 10.0
+          }
+        ],
+        "categories": [
+          {
+            "id": 32,
+            "name": "Bilim"
+          }
+        ]
       }
     ]
   }
 }
 ```
+
+**Note:**
+- The response includes all value fields (`text`, `file`, `json`, `products`, `categories`), but only the field matching the `type` will have a value. All other fields will be `null`.
+- The `json` field returns a JSON string that should be parsed on the client side using `JSON.parse()`.
+- The `products` field returns an array of product objects with `id`, `sku`, `name`, `final_price`, `regular_price`, `currency`, `is_in_stock`, and `qty` fields. Price and stock information is loaded from Magento catalog.
+- The `categories` field returns an array of category objects with `id` and `name` fields (same format as REST API).
 
 You can access the configuration data programmatically within Magento (e.g., in Blocks, ViewModels, or other Models) by injecting the `IDangerous\AppConfig\Api\AppConfigInterface`.
 
@@ -225,4 +369,3 @@ MIT License.
 ## Author
 
 **Orkan K.**
-### Internal PHP Usage

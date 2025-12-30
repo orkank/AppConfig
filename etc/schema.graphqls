@@ -8,8 +8,28 @@ type Query {
 
 type AppConfigKeyValue {
     key: String @doc(description: "Configuration Key")
-    value: String @doc(description: "Configuration Value")
     group: String @doc(description: "Configuration Group Code")
-    type: String @doc(description: "Data Type (text, json, products, category, file)")
+    type: String @doc(description: "Data Type (text, json, products, categories, file)")
     version: String @doc(description: "Minimum App Version Requirement")
+    text: String @doc(description: "Text value (for type: text)")
+    file: String @doc(description: "File URL (for type: file)")
+    json: String @doc(description: "JSON value (for type: json) - JSON string that should be parsed on the client side")
+    products: [AppConfigProduct] @doc(description: "Products array (for type: products)")
+    categories: [AppConfigCategory] @doc(description: "Categories array (for type: categories)")
+}
+
+type AppConfigProduct {
+    id: Int @doc(description: "Product ID")
+    sku: String @doc(description: "Product SKU")
+    name: String @doc(description: "Product Name")
+    final_price: Float @doc(description: "Final price (includes all discounts)")
+    regular_price: Float @doc(description: "Regular price (before discounts)")
+    currency: String @doc(description: "Currency code")
+    is_in_stock: Boolean @doc(description: "Stock status")
+    qty: Float @doc(description: "Stock quantity")
+}
+
+type AppConfigCategory {
+    id: Int @doc(description: "Category ID")
+    name: String @doc(description: "Category Name")
 }
