@@ -1,0 +1,73 @@
+<?php
+/**
+ * @var \Magento\Framework\View\Element\Template $block
+ */
+?>
+<script>
+require(['jquery', 'uiRegistry'], function ($, registry) {
+    'use strict';
+
+    // Function to clean up file_path when file is deleted
+    function cleanupFilePath() {
+        try {
+            var formProvider = registry.get('appconfig_keyvalue_form.appconfig_keyvalue_form_data_source');
+            if (formProvider) {
+                var formDataObj = formProvider.get('data');
+                if (formDataObj) {
+                    // Check if file array is empty
+                    if (!formDataObj.file || (Array.isArray(formDataObj.file) && formDataObj.file.length === 0)) {
+                        // File was deleted, remove file_path
+                        formProvider.set('data.file_path', '');
+
+                        // Also remove hidden input if exists
+                        var $filePathInput = $('input[name="data[file_path]"], input[name="file_path"]');
+                        if ($filePathInput.length) {
+                            $filePathInput.val('').remove();
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Error cleaning file_path:', e);
+        }
+    }
+
+    // Listen for file uploader remove event
+    $(document).on('click', '.file-uploader .file-uploader-filename-action-delete', function() {
+        // File is being removed, clean up file_path after a short delay
+        setTimeout(cleanupFilePath, 300);
+    });
+
+    // Listen for form submit - clean up file_path before submit
+    $(document).on('submit', 'form[data-form="appconfig_keyvalue_form"], form[action*="appconfig/keyvalue/save"]', function(e) {
+        cleanupFilePath();
+    });
+
+    // Also listen for UI Component form data changes
+    var formProvider = registry.get('appconfig_keyvalue_form.appconfig_keyvalue_form_data_source');
+    if (formProvider) {
+        formProvider.on('data', function() {
+            setTimeout(cleanupFilePath, 100);
+        });
+    }
+
+    // Periodic check (as fallback)
+    setInterval(function() {
+        try {
+            var formProvider = registry.get('appconfig_keyvalue_form.appconfig_keyvalue_form_data_source');
+            if (formProvider) {
+                var formDataObj = formProvider.get('data');
+                if (formDataObj && formDataObj.file_path) {
+                    // Check if file array is empty but file_path exists
+                    if (!formDataObj.file || (Array.isArray(formDataObj.file) && formDataObj.file.length === 0)) {
+                        formProvider.set('data.file_path', '');
+                    }
+                }
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+    }, 1000);
+});
+</script>
+

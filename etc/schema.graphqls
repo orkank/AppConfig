@@ -1,0 +1,15 @@
+type Query {
+    appConfig (
+        keys: [String] @doc(description: "Filter by specific configuration keys"),
+        groups: [String] @doc(description: "Filter by specific configuration groups"),
+        app_version: String @doc(description: "Client App Version for compatibility check (e.g. 1.0.0)")
+    ): [AppConfigKeyValue] @resolver(class: "IDangerous\\AppConfig\\Model\\Resolver\\AppConfigResolver") @doc(description: "Retrieve app configuration values")
+}
+
+type AppConfigKeyValue {
+    key: String @doc(description: "Configuration Key")
+    value: String @doc(description: "Configuration Value")
+    group: String @doc(description: "Configuration Group Code")
+    type: String @doc(description: "Data Type (text, json, products, category, file)")
+    version: String @doc(description: "Minimum App Version Requirement")
+}

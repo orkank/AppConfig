@@ -1,0 +1,70 @@
+<?php
+declare(strict_types=1);
+
+namespace IDangerous\AppConfig\Controller\Adminhtml\KeyValue;
+
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Ui\Component\MassAction\Filter;
+use IDangerous\AppConfig\Model\ResourceModel\KeyValue\CollectionFactory;
+
+class MassDelete extends Action
+{
+    /**
+     * Authorization level
+     */
+    const ADMIN_RESOURCE = 'IDangerous_AppConfig::keyvalues';
+
+    /**
+     * @var Filter
+     */
+    protected $filter;
+
+    /**
+     * @var CollectionFactory
+     */
+    protected $collectionFactory;
+
+    /**
+     * @param Context $context
+     * @param Filter $filter
+     * @param CollectionFactory $collectionFactory
+     */
+    public function __construct(
+        Context $context,
+        Filter $filter,
+        CollectionFactory $collectionFactory
+    ) {
+        parent::__construct($context);
+        $this->filter = $filter;
+        $this->collectionFactory = $collectionFactory;
+    }
+
+    /**
+     * Mass delete action
+     *
+     * @return \Magento\Framework\Controller\Result\ResultRedirect
+     */
+    public function execute()
+    {
+        try {
+            $collection = $this->filter->getCollection($this->collectionFactory->create());
+            $collectionSize = $collection->getSize();
+
+            foreach ($collection as $item) {
+                $item->delete();
+            }
+
+            $this->messageManager->addSuccessMessage(
+                __('A total of %1 record(s) have been deleted.', $collectionSize)
+            );
+        } catch (\Exception $e) {
+            $this->messageManager->addErrorMessage($e->getMessage());
+        }
+
+        $resultRedirect = $this->resultRedirectFactory->create();
+        return $resultRedirect->setPath('*/*/');
+    }
+}
+
+

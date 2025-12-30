@@ -1,0 +1,94 @@
+<?php
+/**
+ * @var \Magento\Framework\View\Element\Template $block
+ */
+?>
+<div id="json-editor-container" style="display: none;">
+    <div class="admin__field" style="margin-bottom: 15px;">
+        <div class="admin__field-control" style="text-align: right;">
+            <button type="button"
+                    id="toggle-nested-mode-btn"
+                    class="action-secondary"
+                    style="margin-bottom: 10px; margin-right: 10px;">
+                <span><?= $block->escapeHtml(__('Switch to Nested Mode')) ?></span>
+            </button>
+            <button type="button"
+                    id="toggle-raw-mode-btn"
+                    class="action-secondary"
+                    style="margin-bottom: 10px;">
+                <span><?= $block->escapeHtml(__('Switch to Raw JSON')) ?></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Key-Value Pair Mode -->
+    <div id="keyvalue-mode">
+        <div class="admin__field">
+            <label class="admin__field-label">
+                <span><?= $block->escapeHtml(__('Key-Value Pairs')) ?></span>
+            </label>
+            <div class="admin__field-control">
+                <div id="keyvalue-pairs-container">
+                    <!-- Key-value pairs will be dynamically added here -->
+                </div>
+                <button type="button"
+                        id="add-keyvalue-pair-btn"
+                        class="action-secondary"
+                        style="margin-top: 10px;">
+                    <span><?= $block->escapeHtml(__('Add Key-Value Pair')) ?></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nested Mode -->
+    <div id="nested-mode" style="display: none;">
+        <div class="admin__field">
+            <label class="admin__field-label">
+                <span><?= $block->escapeHtml(__('Array of Objects (Nested Mode)')) ?></span>
+            </label>
+            <div class="admin__field-control">
+                <div id="nested-pairs-container">
+                    <!-- Nested rows will be dynamically added here -->
+                </div>
+                <button type="button"
+                        id="add-nested-pair-btn"
+                        class="action-secondary"
+                        style="margin-top: 10px;">
+                    <span><?= $block->escapeHtml(__('Add Row')) ?></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw JSON Mode -->
+    <div id="raw-json-mode" style="display: none;">
+        <div class="admin__field">
+            <label class="admin__field-label">
+                <span><?= $block->escapeHtml(__('Raw JSON')) ?></span>
+            </label>
+            <div class="admin__field-control">
+                <textarea id="raw-json-textarea"
+                          class="admin__control-textarea"
+                          rows="10"
+                          style="width: 100%; font-family: monospace;"></textarea>
+                <div class="admin__field-note" style="margin-top: 5px; color: #666; font-size: 12px;">
+                    <?= $block->escapeHtml(__('Enter valid JSON format. Example: {"key1": "value1", "key2": "value2"}')) ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+require(['IDangerous_AppConfig/js/json-editor'], function(jsonEditorInit) {
+    'use strict';
+    console.log('JSON Editor template script loaded');
+    if (typeof jsonEditorInit === 'function') {
+        jsonEditorInit({
+            mediaBrowserUrl: '<?= $block->escapeUrl($block->getUrl('cms/wysiwyg_images/index')) ?>',
+            mediaBaseUrl: '<?= $block->escapeUrl($block->getUrl('', ['_type' => \Magento\Framework\UrlInterface::URL_TYPE_MEDIA])) ?>'
+        });
+    }
+});
+</script>

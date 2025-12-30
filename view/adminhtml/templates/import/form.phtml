@@ -1,0 +1,154 @@
+<?php
+/**
+ * @var \Magento\Backend\Block\Template $block
+ */
+?>
+<div class="entry-edit form-inline">
+    <div class="fieldset-wrapper">
+        <div class="fieldset-wrapper-title">
+            <span class="title"><?= $block->escapeHtml(__('Export Configuration')) ?></span>
+        </div>
+        <fieldset class="fieldset">
+            <div class="admin__field field">
+                <div class="admin__field-control">
+                    <p class="note">
+                        <span><?= $block->escapeHtml(__('Export all groups and items to CSV or JSON format.')) ?></span>
+                    </p>
+                </div>
+            </div>
+            <div class="admin__field field" style="margin-top: 15px;">
+                <div class="admin__field-control">
+                    <button type="button"
+                            class="action-secondary"
+                            onclick="window.location.href='<?= $block->escapeUrl($block->getUrl('appconfig/export/export', ['format' => 'csv'])) ?>'"
+                            title="<?= $block->escapeHtmlAttr(__('Export to CSV')) ?>">
+                        <span><?= $block->escapeHtml(__('Export to CSV')) ?></span>
+                    </button>
+                    <button type="button"
+                            class="action-secondary"
+                            onclick="window.location.href='<?= $block->escapeUrl($block->getUrl('appconfig/export/export', ['format' => 'json'])) ?>'"
+                            title="<?= $block->escapeHtmlAttr(__('Export to JSON')) ?>"
+                            style="margin-left: 10px;">
+                        <span><?= $block->escapeHtml(__('Export to JSON')) ?></span>
+                    </button>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+
+    <div class="fieldset-wrapper" style="margin-top: 30px;">
+        <div class="fieldset-wrapper-title">
+            <span class="title"><?= $block->escapeHtml(__('Import Configuration')) ?></span>
+        </div>
+        <fieldset class="fieldset">
+            <form id="import-form"
+                  action="<?= $block->escapeUrl($block->getUrl('appconfig/import/import')) ?>"
+                  method="post"
+                  enctype="multipart/form-data">
+                <?= $block->getBlockHtml('formkey') ?>
+
+                <div class="admin__field field">
+                    <label class="admin__field-label" for="import_file">
+                        <span><?= $block->escapeHtml(__('Select File')) ?></span>
+                    </label>
+                    <div class="admin__field-control">
+                        <div class="admin__control-file-wrapper">
+                            <input type="text"
+                                   id="import_file_display"
+                                   class="admin__control-text"
+                                   readonly="readonly"
+                                   placeholder="<?= $block->escapeHtmlAttr(__('No file selected.')) ?>"/>
+                            <button type="button"
+                                    class="action-secondary"
+                                    onclick="document.getElementById('import_file').click();"
+                                    style="margin-left: 10px;">
+                                <span><?= $block->escapeHtml(__('Browse...')) ?></span>
+                            </button>
+                            <input type="file"
+                                   id="import_file"
+                                   name="import_file"
+                                   class="admin__control-file"
+                                   accept=".csv,.json"
+                                   style="display: none;"
+                                   onchange="document.getElementById('import_file_display').value = this.files[0] ? this.files[0].name : '<?= $block->escapeJs(__('No file selected.')) ?>';"/>
+                        </div>
+                        <p class="note">
+                            <span><?= $block->escapeHtml(__('Supported formats: CSV, JSON')) ?></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="admin__field field">
+                    <label class="admin__field-label" for="file_format">
+                        <span><?= $block->escapeHtml(__('File Format')) ?></span>
+                    </label>
+                    <div class="admin__field-control">
+                        <select id="file_format"
+                                name="file_format"
+                                class="admin__control-select">
+                            <option value="csv"><?= $block->escapeHtml(__('CSV')) ?></option>
+                            <option value="json"><?= $block->escapeHtml(__('JSON')) ?></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin__field field">
+                    <label class="admin__field-label">
+                        <span><?= $block->escapeHtml(__('Import Mode')) ?></span>
+                    </label>
+                    <div class="admin__field-control">
+                        <div class="admin__field-option">
+                            <input type="radio"
+                                   id="import_mode_append"
+                                   name="import_mode"
+                                   value="append"
+                                   class="admin__control-radio"
+                                   checked="checked"/>
+                            <label for="import_mode_append" class="admin__field-label">
+                                <?= $block->escapeHtml(__('Append (Update existing, add new)')) ?>
+                            </label>
+                        </div>
+                        <div class="admin__field-option" style="margin-top: 10px;">
+                            <input type="radio"
+                                   id="import_mode_replace"
+                                   name="import_mode"
+                                   value="replace"
+                                   class="admin__control-radio"/>
+                            <label for="import_mode_replace" class="admin__field-label">
+                                <?= $block->escapeHtml(__('Replace (Delete all existing data)')) ?>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin__data-grid-actions-wrap" style="margin-top: 20px;">
+                    <div class="admin__data-grid-action-row">
+                        <div class="admin__data-grid-action-col">
+                            <button type="submit"
+                                    class="action-primary"
+                                    title="<?= $block->escapeHtmlAttr(__('Import')) ?>">
+                                <span><?= $block->escapeHtml(__('Import')) ?></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </fieldset>
+    </div>
+</div>
+
+<script>
+require(['jquery'], function($) {
+    $('#import_file').on('change', function() {
+        var fileName = this.files[0] ? this.files[0].name : '<?= $block->escapeJs(__('No file selected.')) ?>';
+        $('#import_file_display').val(fileName);
+
+        // Auto-detect format from file extension
+        if (fileName.toLowerCase().endsWith('.csv')) {
+            $('#file_format').val('csv');
+        } else if (fileName.toLowerCase().endsWith('.json')) {
+            $('#file_format').val('json');
+        }
+    });
+});
+</script>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="IDangerous_AppConfig::appconfig"
+             title="App Config"
+             module="IDangerous_AppConfig"
+             sortOrder="200"
+             parent="Magento_Backend::stores"
+             resource="IDangerous_AppConfig::appconfig"/>
+        <add id="IDangerous_AppConfig::config"
+             title="Configuration"
+             module="IDangerous_AppConfig"
+             sortOrder="10"
+             parent="IDangerous_AppConfig::appconfig"
+             action="adminhtml/system_config/edit/section/appconfig"
+             resource="IDangerous_AppConfig::config"/>
+        <add id="IDangerous_AppConfig::groups"
+             title="Groups"
+             module="IDangerous_AppConfig"
+             sortOrder="20"
+             parent="IDangerous_AppConfig::appconfig"
+             action="appconfig/group"
+             resource="IDangerous_AppConfig::groups"/>
+        <add id="IDangerous_AppConfig::keyvalues"
+             title="Key-Value Pairs"
+             module="IDangerous_AppConfig"
+             sortOrder="30"
+             parent="IDangerous_AppConfig::appconfig"
+             action="appconfig/keyvalue"
+             resource="IDangerous_AppConfig::keyvalues"/>
+        <add id="IDangerous_AppConfig::import"
+             title="Import/Export"
+             module="IDangerous_AppConfig"
+             sortOrder="40"
+             parent="IDangerous_AppConfig::appconfig"
+             action="appconfig/import"
+             resource="IDangerous_AppConfig::import"/>
+    </menu>
+</config>
+
+

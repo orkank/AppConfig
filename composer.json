@@ -1,0 +1,35 @@
+{
+    "name": "idangerous/appconfig",
+    "description": "Dynamic App Configuration Management Module for Magento 2. Allows managing key-value pairs, groups, and exposing them via REST API.",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Orkan K.",
+            "role": "Developer"
+        }
+    ],
+    "keywords": [
+        "magento2",
+        "app-configuration",
+        "mobile-app",
+        "api",
+        "key-value-store"
+    ],
+    "require": {
+        "php": "~7.4.0||~8.1.0||~8.2.0",
+        "magento/framework": "*",
+        "magento/module-backend": "*",
+        "magento/module-store": "*",
+        "magento/module-api": "*"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "IDangerous\\AppConfig\\": ""
+        }
+    }
+}

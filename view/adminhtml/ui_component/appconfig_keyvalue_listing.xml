@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">appconfig_keyvalue_listing.appconfig_keyvalue_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <buttons>
+            <button name="add">
+                <url path="*/*/new"/>
+                <class>primary</class>
+                <label translate="true">Add New Key-Value</label>
+            </button>
+        </buttons>
+        <spinner>appconfig_keyvalue_columns</spinner>
+        <deps>
+            <dep>appconfig_keyvalue_listing.appconfig_keyvalue_listing_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="appconfig_keyvalue_listing_data_source" component="Magento_Ui/js/grid/provider">
+        <settings>
+            <storageConfig>
+                <param name="indexField" xsi:type="string">keyvalue_id</param>
+            </storageConfig>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>IDangerous_AppConfig::keyvalues</aclResource>
+        <dataProvider class="IDangerous\AppConfig\Ui\DataProvider\KeyValue\ListingDataProvider" name="appconfig_keyvalue_listing_data_source">
+            <settings>
+                <requestFieldName>keyvalue_id</requestFieldName>
+                <primaryFieldName>keyvalue_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <settings>
+            <sticky>true</sticky>
+        </settings>
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters">
+            <settings>
+                <templates>
+                    <filters>
+                        <select>
+                            <param name="template" xsi:type="string">ui/grid/filters/elements/ui-select</param>
+                            <param name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</param>
+                        </select>
+                    </filters>
+                </templates>
+            </settings>
+        </filters>
+        <massaction name="listing_massaction">
+            <action name="delete">
+                <settings>
+                    <confirm>
+                        <message translate="true">Are you sure you want to delete selected items?</message>
+                        <title translate="true">Delete items</title>
+                    </confirm>
+                    <url path="appconfig/keyvalue/massDelete"/>
+                    <type>delete</type>
+                    <label translate="true">Delete</label>
+                </settings>
+            </action>
+            <action name="enable">
+                <settings>
+                    <url path="appconfig/keyvalue/massStatus"/>
+                    <type>enable</type>
+                    <label translate="true">Enable</label>
+                </settings>
+            </action>
+            <action name="disable">
+                <settings>
+                    <url path="appconfig/keyvalue/massStatus"/>
+                    <type>disable</type>
+                    <label translate="true">Disable</label>
+                </settings>
+            </action>
+        </massaction>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="appconfig_keyvalue_columns">
+        <settings>
+            <childDefaults>
+                <param name="fieldAction" xsi:type="array">
+                    <item name="provider" xsi:type="string">appconfig_keyvalue_listing.appconfig_keyvalue_listing.appconfig_keyvalue_columns_editor</item>
+                    <item name="target" xsi:type="string">startEdit</item>
+                    <item name="params" xsi:type="array">
+                        <item name="0" xsi:type="string">${ $.$data.rowIndex }</item>
+                        <item name="1" xsi:type="boolean">true</item>
+                    </item>
+                </param>
+            </childDefaults>
+        </settings>
+        <selectionsColumn name="ids">
+            <settings>
+                <indexField>keyvalue_id</indexField>
+            </settings>
+        </selectionsColumn>
+        <column name="keyvalue_id">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">ID</label>
+                <sorting>asc</sorting>
+            </settings>
+        </column>
+        <column name="key_name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Key</label>
+            </settings>
+        </column>
+        <column name="name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Name</label>
+            </settings>
+        </column>
+        <column name="group_code">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Group</label>
+            </settings>
+        </column>
+        <column name="value" class="IDangerous\AppConfig\Ui\Component\Listing\Column\TruncatedValue">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Value</label>
+                <bodyTmpl>ui/grid/cells/text</bodyTmpl>
+            </settings>
+        </column>
+        <column name="value_type">
+            <settings>
+                <filter>select</filter>
+                <label translate="true">Type</label>
+            </settings>
+        </column>
+        <column name="version">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Version</label>
+            </settings>
+        </column>
+        <column name="is_active" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <options class="Magento\Config\Model\Config\Source\Yesno"/>
+                <filter>select</filter>
+                <dataType>select</dataType>
+                <label translate="true">Status</label>
+            </settings>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Created</label>
+            </settings>
+        </column>
+        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Updated</label>
+            </settings>
+        </column>
+        <actionsColumn name="actions" class="IDangerous\AppConfig\Ui\Component\Listing\Column\KeyValue\Actions">
+            <settings>
+                <indexField>keyvalue_id</indexField>
+                <resizeEnabled>false</resizeEnabled>
+                <resizeDefaultWidth>107</resizeDefaultWidth>
+            </settings>
+        </actionsColumn>
+    </columns>
+</listing>
+
+

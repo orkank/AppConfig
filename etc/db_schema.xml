@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="idangerous_appconfig_group" resource="default" engine="innodb" comment="App Config Groups">
+        <column xsi:type="int" name="group_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Group ID"/>
+        <column xsi:type="varchar" name="name" nullable="false" length="255" comment="Group Name"/>
+        <column xsi:type="varchar" name="code" nullable="false" length="100" comment="Group Code"/>
+        <column xsi:type="text" name="description" nullable="true" comment="Description"/>
+        <column xsi:type="smallint" name="is_active" padding="5" unsigned="true" nullable="false" default="1" comment="Is Active"/>
+        <column xsi:type="varchar" name="version" nullable="true" length="50" comment="Version (e.g., 4.0.10+80)"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="group_id"/>
+        </constraint>
+        <index referenceId="IDANGEROUS_APPCONFIG_GROUP_CODE" indexType="btree">
+            <column name="code"/>
+        </index>
+        <index referenceId="IDANGEROUS_APPCONFIG_GROUP_ACTIVE" indexType="btree">
+            <column name="is_active"/>
+        </index>
+    </table>
+
+    <table name="idangerous_appconfig_keyvalue" resource="default" engine="innodb" comment="App Config Key-Value Pairs">
+        <column xsi:type="int" name="keyvalue_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Key-Value ID"/>
+        <column xsi:type="int" name="group_id" padding="10" unsigned="true" nullable="true" comment="Group ID"/>
+        <column xsi:type="varchar" name="key_name" nullable="false" length="255" comment="Key Name (Machine Code)"/>
+        <column xsi:type="varchar" name="name" nullable="true" length="255" comment="Admin Description Name"/>
+        <column xsi:type="text" name="value" nullable="true" comment="Value (deprecated - kept for backward compatibility)"/>
+        <column xsi:type="varchar" name="value_type" nullable="true" length="20" comment="Value Type (deprecated - kept for backward compatibility)"/>
+        <column xsi:type="text" name="text_value" nullable="true" comment="Text Value"/>
+        <column xsi:type="varchar" name="file_path" nullable="true" length="500" comment="File Path"/>
+        <column xsi:type="text" name="json_value" nullable="true" comment="JSON Value"/>
+        <column xsi:type="text" name="products_value" nullable="true" comment="Products Value (JSON array)"/>
+        <column xsi:type="text" name="categories_value" nullable="true" comment="Categories Value (JSON array)"/>
+        <column xsi:type="smallint" name="is_active" padding="5" unsigned="true" nullable="false" default="1" comment="Is Active"/>
+        <column xsi:type="varchar" name="version" nullable="true" length="50" comment="Version (e.g., 4.0.10+80)"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="keyvalue_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="IDANGEROUS_APPCONFIG_KEYVALUE_GROUP_ID_IDANGEROUS_APPCONFIG_GROUP_GROUP_ID"
+                    table="idangerous_appconfig_keyvalue" column="group_id"
+                    referenceTable="idangerous_appconfig_group" referenceColumn="group_id"
+                    onDelete="SET NULL"/>
+        <index referenceId="IDANGEROUS_APPCONFIG_KEYVALUE_GROUP_ID" indexType="btree">
+            <column name="group_id"/>
+        </index>
+        <index referenceId="IDANGEROUS_APPCONFIG_KEYVALUE_KEY_NAME" indexType="btree">
+            <column name="key_name"/>
+        </index>
+        <index referenceId="IDANGEROUS_APPCONFIG_KEYVALUE_ACTIVE" indexType="btree">
+            <column name="is_active"/>
+        </index>
+    </table>
+</schema>

@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">appconfig_keyvalue_form.appconfig_keyvalue_form_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Key-Value Information</item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+    </argument>
+    <settings>
+        <buttons>
+            <button name="save" class="IDangerous\AppConfig\Block\Adminhtml\KeyValue\Edit\SaveButton"/>
+            <button name="delete" class="IDangerous\AppConfig\Block\Adminhtml\KeyValue\Edit\DeleteButton"/>
+            <button name="back" class="IDangerous\AppConfig\Block\Adminhtml\KeyValue\Edit\BackButton"/>
+        </buttons>
+        <namespace>appconfig_keyvalue_form</namespace>
+        <dataScope>data</dataScope>
+        <deps>
+            <dep>appconfig_keyvalue_form.appconfig_keyvalue_form_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="appconfig_keyvalue_form_data_source">
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+        <settings>
+            <submitUrl path="appconfig/keyvalue/save"/>
+        </settings>
+        <dataProvider class="IDangerous\AppConfig\Ui\DataProvider\KeyValue\FormDataProvider" name="appconfig_keyvalue_form_data_source">
+            <settings>
+                <requestFieldName>keyvalue_id</requestFieldName>
+                <primaryFieldName>keyvalue_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <fieldset name="general">
+        <settings>
+            <label translate="true">General Information</label>
+        </settings>
+        <field name="keyvalue_id" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <visible>false</visible>
+                <dataScope>keyvalue_id</dataScope>
+            </settings>
+        </field>
+        <field name="group_id" formElement="select">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Group</label>
+                <dataScope>group_id</dataScope>
+            </settings>
+            <formElements>
+                <select>
+                    <settings>
+                        <options class="IDangerous\AppConfig\Model\Source\Group"/>
+                    </settings>
+                </select>
+            </formElements>
+        </field>
+        <field name="key_name" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+                <dataType>text</dataType>
+                <label translate="true">Key Name</label>
+                <dataScope>key_name</dataScope>
+            </settings>
+        </field>
+        <field name="name" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Admin Name (Description)</label>
+                <dataScope>name</dataScope>
+            </settings>
+        </field>
+        <field name="text_value" formElement="textarea">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Text Value</label>
+                <dataScope>text_value</dataScope>
+            </settings>
+            <formElements>
+                <textarea>
+                    <settings>
+                        <rows>5</rows>
+                    </settings>
+                </textarea>
+            </formElements>
+        </field>
+        <field name="json_value" formElement="textarea">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">JSON Value</label>
+                <dataScope>json_value</dataScope>
+                <notice translate="true">Enter valid JSON format</notice>
+            </settings>
+            <formElements>
+                <textarea>
+                    <settings>
+                        <rows>5</rows>
+                    </settings>
+                </textarea>
+            </formElements>
+        </field>
+        <field name="selected_products" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                    <item name="component" xsi:type="string">IDangerous_AppConfig/js/form/element/product-selector</item>
+                    <item name="elementTmpl" xsi:type="string">IDangerous_AppConfig/form/element/product-selector</item>
+                    <item name="modalUrl" xsi:type="url" path="appconfig/keyvalue/productgrid"/>
+                    <item name="productFetchUrl" xsi:type="url" path="appconfig/keyvalue/getproducts"/>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Products</label>
+                <dataScope>selected_products</dataScope>
+            </settings>
+        </field>
+        <field name="selected_categories" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                    <item name="component" xsi:type="string">IDangerous_AppConfig/js/form/element/category-selector</item>
+                    <item name="elementTmpl" xsi:type="string">IDangerous_AppConfig/form/element/category-selector</item>
+                    <item name="modalUrl" xsi:type="url" path="appconfig/keyvalue/categorygrid"/>
+                    <item name="categoryFetchUrl" xsi:type="url" path="appconfig/keyvalue/getcategories"/>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Categories</label>
+                <dataScope>selected_categories</dataScope>
+            </settings>
+        </field>
+        <field name="file" formElement="fileUploader">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                    <item name="elementTmpl" xsi:type="string">ui/form/element/uploader/uploader</item>
+                    <item name="previewTmpl" xsi:type="string">Magento_Catalog/image-preview</item>
+                    <item name="uploaderConfig" xsi:type="array">
+                        <item name="url" xsi:type="url" path="appconfig/keyvalue/upload"/>
+                    </item>
+                    <item name="openDialogTitle" xsi:type="string" translate="true">File Upload</item>
+                    <item name="allowedExtensions" xsi:type="string">jpg jpeg png gif svg webp bmp ico tiff tif heic heif avif mp4 avi mov wmv flv webm mkv 3gp ogv doc docx pdf xls xlsx ppt pptx odt ods odp rtf csv txt zip json xml rar 7z</item>
+                    <item name="maxFileSize" xsi:type="number">6097152</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>file</dataType>
+                <label translate="true">File</label>
+                <dataScope>file</dataScope>
+            </settings>
+        </field>
+        <field name="version" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Version</label>
+                <dataScope>version</dataScope>
+                <notice translate="true">Version format: 4.0.10+80 (optional)</notice>
+            </settings>
+        </field>
+        <field name="is_active" formElement="checkbox">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                    <item name="default" xsi:type="number">1</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>boolean</dataType>
+                <label translate="true">Is Active</label>
+                <dataScope>is_active</dataScope>
+            </settings>
+            <formElements>
+                <checkbox>
+                    <settings>
+                        <valueMap>
+                            <map name="false" xsi:type="number">0</map>
+                            <map name="true" xsi:type="number">1</map>
+                        </valueMap>
+                        <prefer>toggle</prefer>
+                    </settings>
+                </checkbox>
+            </formElements>
+        </field>
+    </fieldset>
+</form>
+
+

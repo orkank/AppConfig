@@ -1,0 +1,35 @@
+<div class="admin__field-control" data-bind="visible: visible">
+    <!-- Hidden input field for form submission -->
+    <input type="hidden"
+           data-bind="value: value, attr: {name: inputName}"
+           data-form-part="appconfig_keyvalue_form"/>
+
+    <div class="category-selector-container">
+        <button type="button"
+                class="action-secondary"
+                data-bind="click: openCategoryModal">
+            <span data-bind="i18n: 'Select Categories'"></span>
+        </button>
+
+        <div class="selected-categories-list" data-bind="if: selectedCategories().length > 0">
+            <div class="admin__field-note" style="margin-top: 10px;">
+                <span data-bind="i18n: 'Selected Categories:'"></span>
+                <span data-bind="text: selectedCategories().length"></span>
+            </div>
+            <ul class="selected-categories" style="list-style: none; padding: 0; margin-top: 10px;">
+                <!-- ko foreach: selectedCategories -->
+                <li style="padding: 5px; border: 1px solid #ccc; margin-bottom: 5px; background: #f5f5f5;">
+                    <span data-bind="text: name"></span>
+                    <span style="color: #999; margin-left: 10px;" data-bind="text: 'ID: ' + id"></span>
+                    <button type="button"
+                            class="action-delete"
+                            style="float: right;"
+                            data-bind="click: $parent.removeCategory.bind($parent, $data)">
+                        <span data-bind="i18n: 'Remove'"></span>
+                    </button>
+                </li>
+                <!-- /ko -->
+            </ul>
+        </div>
+    </div>
+</div>

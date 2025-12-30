@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="IDangerous\AppConfig\Api\AppConfigInterface" type="IDangerous\AppConfig\Model\AppConfig"/>
+
+    <type name="Magento\Framework\Webapi\Rest\Request">
+        <plugin name="force_json_response" type="IDangerous\AppConfig\Plugin\ForceJsonResponse" sortOrder="10"/>
+    </type>
+
+    <type name="Magento\Framework\Webapi\ServiceOutputProcessor">
+        <plugin name="force_object_response" type="IDangerous\AppConfig\Plugin\ServiceOutputProcessorPlugin" sortOrder="100"/>
+    </type>
+</config>
