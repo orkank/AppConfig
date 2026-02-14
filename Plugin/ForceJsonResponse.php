@@ -16,11 +16,10 @@ class ForceJsonResponse
      */
     public function afterGetAcceptTypes(Request $subject, array $result)
     {
-        $pathInfo = $subject->getPathInfo();
+        $pathInfo = $subject->getPathInfo() ?? '';
 
-        // Force JSON for appconfig endpoints
-        if (strpos($pathInfo, '/appconfig/') !== false) {
-            // Return JSON as preferred type
+        // Force JSON for appconfig endpoints (path can vary: /V1/appconfig/config, V1/appconfig/config, etc.)
+        if (stripos($pathInfo, 'appconfig') !== false) {
             return ['application/json'];
         }
 

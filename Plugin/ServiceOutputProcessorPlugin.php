@@ -35,8 +35,8 @@ class ServiceOutputProcessorPlugin
     {
         $pathInfo = $this->request->getPathInfo();
 
-        // Only process appconfig endpoints
-        if (strpos($pathInfo, '/appconfig/') === false) {
+        // Only process appconfig endpoints (path can vary)
+        if (stripos($pathInfo ?? '', 'appconfig') === false) {
             return $result;
         }
 

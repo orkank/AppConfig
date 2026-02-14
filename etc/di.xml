@@ -9,4 +9,8 @@
     <type name="Magento\Framework\Webapi\ServiceOutputProcessor">
         <plugin name="force_object_response" type="IDangerous\AppConfig\Plugin\ServiceOutputProcessorPlugin" sortOrder="100"/>
     </type>
+
+    <type name="Magento\Framework\Webapi\Rest\Response\RendererFactory">
+        <plugin name="force_json_content_type" type="IDangerous\AppConfig\Plugin\ForceJsonContentType" sortOrder="10"/>
+    </type>
 </config>
