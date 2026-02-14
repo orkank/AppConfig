@@ -83,14 +83,18 @@ class Export extends Action
                 ];
             }
 
-            // Export Key-Value Pairs
+            // Export Key-Value Pairs - use type-specific columns (products_value, json_value, etc.)
             $keyValueCollection = $this->keyValueCollectionFactory->create();
             foreach ($keyValueCollection as $keyValue) {
+                $valueType = $this->resolveValueType($keyValue);
+                $value = $this->getExportValueByType($keyValue, $valueType);
+
                 $exportData['keyvalues'][] = [
                     'group_code' => $this->getGroupCodeById($keyValue->getGroupId()),
                     'key_name' => $keyValue->getKeyName(),
-                    'value' => $keyValue->getValue(),
-                    'value_type' => $keyValue->getValueType(),
+                    'name' => $keyValue->getData('name'),
+                    'value' => $value,
+                    'value_type' => $valueType,
                     'file_path' => $keyValue->getFilePath(),
                     'is_active' => (int)$keyValue->getIsActive(),
                     'version' => $keyValue->getVersion()
@@ -131,7 +135,7 @@ class Export extends Action
         $output = fopen('php://temp', 'r+');
 
         // Write Groups
-        fputcsv($output, ['Type', 'Name', 'Code', 'Description', 'Is Active', 'Version', 'Key Name', 'Value', 'Value Type', 'File Path']);
+        fputcsv($output, ['Type', 'Name', 'Code', 'Description', 'Is Active', 'Version', 'Key Name', 'Admin Description', 'Value', 'Value Type', 'File Path']);
 
         foreach ($exportData['groups'] as $group) {
             fputcsv($output, [
@@ -141,6 +145,7 @@ class Export extends Action
                 $group['description'] ?? '',
                 $group['is_active'],
                 $group['version'] ?? '',
+                '',
                 '',
                 '',
                 '',
@@ -158,6 +163,7 @@ class Export extends Action
                 $keyValue['is_active'],
                 $keyValue['version'] ?? '',
                 $keyValue['key_name'],
+                $keyValue['name'] ?? '',
                 $keyValue['value'] ?? '',
                 $keyValue['value_type'] ?? 'text',
                 $keyValue['file_path'] ?? ''
@@ -170,6 +176,59 @@ class Export extends Action
 
         // Add BOM for UTF-8
         return "\xEF\xBB\xBF" . $csv;
+    }
+
+    /**
+     * Resolve value type - from DB or infer from which column has data
+     *
+     * @param \IDangerous\AppConfig\Model\KeyValue $keyValue
+     * @return string
+     */
+    protected function resolveValueType($keyValue): string
+    {
+        $valueType = $keyValue->getData('value_type');
+        if (!empty($valueType)) {
+            return $valueType;
+        }
+        // Infer from populated column
+        if (!empty($keyValue->getProductsValue())) {
+            return 'products';
+        }
+        if (!empty($keyValue->getJsonValue())) {
+            return 'json';
+        }
+        if (!empty($keyValue->getCategoriesValue())) {
+            return 'categories';
+        }
+        if (!empty($keyValue->getFilePath())) {
+            return 'file';
+        }
+        return 'text';
+    }
+
+    /**
+     * Get export value from correct column based on value type
+     *
+     * @param \IDangerous\AppConfig\Model\KeyValue $keyValue
+     * @param string $valueType
+     * @return string|null
+     */
+    protected function getExportValueByType($keyValue, string $valueType)
+    {
+        switch ($valueType) {
+            case 'products':
+                return $keyValue->getProductsValue();
+            case 'json':
+                return $keyValue->getJsonValue();
+            case 'category':
+            case 'categories':
+                return $keyValue->getCategoriesValue();
+            case 'file':
+                return $keyValue->getFilePath();
+            case 'text':
+            default:
+                return $keyValue->getTextValue() ?? $keyValue->getData('value');
+        }
     }
 
     /**

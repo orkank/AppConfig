@@ -121,6 +121,11 @@ Return all active key-value pairs formatted for the application.
           "id": 343079,
           "sku": "A.314066",
           "name": "Product Name",
+          "image": "https://example.com/media/catalog/product/m/s/ms1234.jpg",
+          "media_gallery": [
+            {"url": "https://example.com/media/catalog/product/m/s/ms1234.jpg", "label": "Front"},
+            {"url": "https://example.com/media/catalog/product/m/s/ms1234_2.jpg", "label": "Back"}
+          ],
           "final_price": 45.50,
           "regular_price": 50.00,
           "currency": "TRY",
@@ -150,7 +155,7 @@ Return all active key-value pairs formatted for the application.
 }
 ```
 
-**Note:** The `products` field includes price and stock information loaded from Magento catalog. All price values are in the store's base currency.
+**Note:** The `products` field includes price, stock, and image information loaded from Magento catalog. The `image` field contains the main product image URL (or Magento placeholder if no image is set). The `media_gallery` field contains all product images in full/original size with URL and label. All price values are in the store's base currency.
 
 #### Get Groups
 Return a list of available configuration groups.
@@ -193,6 +198,11 @@ query {
       id
       sku
       name
+      image
+      media_gallery {
+        url
+        label
+      }
       final_price
       regular_price
       currency
@@ -222,6 +232,11 @@ query {
       id
       sku
       name
+      image
+      media_gallery {
+        url
+        label
+      }
       final_price
       regular_price
       currency
@@ -290,6 +305,11 @@ query {
             "id": 343079,
             "sku": "A.314066",
             "name": "Unutulmuş Kuşlar Göğü - 1 (Ciltli)",
+            "image": "https://example.com/media/catalog/product/m/s/ms1234.jpg",
+            "media_gallery": [
+              {"url": "https://example.com/media/catalog/product/m/s/ms1234.jpg", "label": "Kapak"},
+              {"url": "https://example.com/media/catalog/product/m/s/ms1234_2.jpg", "label": "Arka"}
+            ],
             "final_price": 45.50,
             "regular_price": 50.00,
             "currency": "TRY",
@@ -312,7 +332,7 @@ query {
 **Note:**
 - The response includes all value fields (`text`, `file`, `json`, `products`, `categories`), but only the field matching the `type` will have a value. All other fields will be `null`.
 - The `json` field returns a JSON string that should be parsed on the client side using `JSON.parse()`.
-- The `products` field returns an array of product objects with `id`, `sku`, `name`, `final_price`, `regular_price`, `currency`, `is_in_stock`, and `qty` fields. Price and stock information is loaded from Magento catalog.
+- The `products` field returns an array of product objects with `id`, `sku`, `name`, `image`, `media_gallery`, `final_price`, `regular_price`, `currency`, `is_in_stock`, and `qty` fields. The `image` field contains the main product image URL. The `media_gallery` field contains all product images in full size as `{url, label}` objects. Price and stock information is loaded from Magento catalog.
 - The `categories` field returns an array of category objects with `id` and `name` fields (same format as REST API).
 
 You can access the configuration data programmatically within Magento (e.g., in Blocks, ViewModels, or other Models) by injecting the `IDangerous\AppConfig\Api\AppConfigInterface`.

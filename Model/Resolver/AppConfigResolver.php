@@ -13,9 +13,9 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Helper\Product as ProductHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
-use Magento\Catalog\Model\Product;
 
 class AppConfigResolver implements ResolverInterface
 {
@@ -55,6 +55,11 @@ class AppConfigResolver implements ResolverInterface
     protected $priceCurrency;
 
     /**
+     * @var ProductHelper
+     */
+    protected $productHelper;
+
+    /**
      * @param KeyValueCollectionFactory $keyValueCollectionFactory
      * @param GroupCollectionFactory $groupCollectionFactory
      * @param StoreManagerInterface $storeManager
@@ -62,6 +67,7 @@ class AppConfigResolver implements ResolverInterface
      * @param ProductRepositoryInterface $productRepository
      * @param StockRegistryInterface $stockRegistry
      * @param PriceCurrencyInterface $priceCurrency
+     * @param ProductHelper $productHelper
      */
     public function __construct(
         KeyValueCollectionFactory $keyValueCollectionFactory,
@@ -70,7 +76,8 @@ class AppConfigResolver implements ResolverInterface
         ScopeConfigInterface $scopeConfig,
         ProductRepositoryInterface $productRepository,
         StockRegistryInterface $stockRegistry,
-        PriceCurrencyInterface $priceCurrency
+        PriceCurrencyInterface $priceCurrency,
+        ProductHelper $productHelper
     ) {
         $this->keyValueCollectionFactory = $keyValueCollectionFactory;
         $this->groupCollectionFactory = $groupCollectionFactory;
@@ -79,6 +86,7 @@ class AppConfigResolver implements ResolverInterface
         $this->productRepository = $productRepository;
         $this->stockRegistry = $stockRegistry;
         $this->priceCurrency = $priceCurrency;
+        $this->productHelper = $productHelper;
     }
 
     /**
@@ -196,6 +204,8 @@ class AppConfigResolver implements ResolverInterface
                             'id' => $productId,
                             'sku' => $sku,
                             'name' => $name,
+                            'image' => null,
+                            'media_gallery' => [],
                             'final_price' => 0.0,
                             'regular_price' => 0.0,
                             'currency' => $this->priceCurrency->getCurrency()->getCurrencyCode(),
@@ -232,6 +242,34 @@ class AppConfigResolver implements ResolverInterface
                                 $productInfo['qty'] = (float)$stockItem->getQty();
                             } catch (\Exception $e) {
                                 // Stock info not available, keep defaults
+                            }
+
+                            // Get image URL (main product image, or placeholder if none)
+                            try {
+                                $imageUrl = $this->productHelper->getImageUrl($product);
+                                $productInfo['image'] = $imageUrl ? (string)$imageUrl : null;
+                            } catch (\Exception $e) {
+                                // Image not available, keep null
+                            }
+
+                            // Get media gallery - all images in full/original size
+                            try {
+                                $galleryImages = $product->getMediaGalleryImages();
+                                if ($galleryImages instanceof \Magento\Framework\Data\Collection) {
+                                    $mediaGallery = [];
+                                    foreach ($galleryImages as $galleryImage) {
+                                        $url = $galleryImage->getData('url');
+                                        if ($url) {
+                                            $mediaGallery[] = [
+                                                'url' => (string)$url,
+                                                'label' => (string)($galleryImage->getData('label') ?? '')
+                                            ];
+                                        }
+                                    }
+                                    $productInfo['media_gallery'] = $mediaGallery;
+                                }
+                            } catch (\Exception $e) {
+                                // Media gallery not available, keep empty array
                             }
                         } catch (\Exception $e) {
                             // Product not found or error loading, use provided data only

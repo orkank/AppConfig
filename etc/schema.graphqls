@@ -22,11 +22,18 @@ type AppConfigProduct {
     id: Int @doc(description: "Product ID")
     sku: String @doc(description: "Product SKU")
     name: String @doc(description: "Product Name")
+    image: String @doc(description: "Main product image URL (or placeholder if no image)")
+    media_gallery: [AppConfigMediaGalleryEntry] @doc(description: "All product images in full/original size")
     final_price: Float @doc(description: "Final price (includes all discounts)")
     regular_price: Float @doc(description: "Regular price (before discounts)")
     currency: String @doc(description: "Currency code")
     is_in_stock: Boolean @doc(description: "Stock status")
     qty: Float @doc(description: "Stock quantity")
+}
+
+type AppConfigMediaGalleryEntry {
+    url: String @doc(description: "Full-size image URL")
+    label: String @doc(description: "Image label/alt text")
 }
 
 type AppConfigCategory {

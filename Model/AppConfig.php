@@ -14,6 +14,7 @@ use Magento\Framework\UrlInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Helper\Product as ProductHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 
@@ -65,6 +66,11 @@ class AppConfig implements AppConfigInterface
     protected $priceCurrency;
 
     /**
+     * @var ProductHelper
+     */
+    protected $productHelper;
+
+    /**
      * @param ConfigDataFactory $configDataFactory
      * @param GroupDataFactory $groupDataFactory
      * @param GroupCollectionFactory $groupCollectionFactory
@@ -74,6 +80,7 @@ class AppConfig implements AppConfigInterface
      * @param ProductRepositoryInterface $productRepository
      * @param StockRegistryInterface $stockRegistry
      * @param PriceCurrencyInterface $priceCurrency
+     * @param ProductHelper $productHelper
      */
     public function __construct(
         ConfigDataFactory $configDataFactory,
@@ -84,7 +91,8 @@ class AppConfig implements AppConfigInterface
         ScopeConfigInterface $scopeConfig,
         ProductRepositoryInterface $productRepository,
         StockRegistryInterface $stockRegistry,
-        PriceCurrencyInterface $priceCurrency
+        PriceCurrencyInterface $priceCurrency,
+        ProductHelper $productHelper
     ) {
         $this->configDataFactory = $configDataFactory;
         $this->groupDataFactory = $groupDataFactory;
@@ -95,6 +103,7 @@ class AppConfig implements AppConfigInterface
         $this->productRepository = $productRepository;
         $this->stockRegistry = $stockRegistry;
         $this->priceCurrency = $priceCurrency;
+        $this->productHelper = $productHelper;
     }
 
     /**
@@ -200,6 +209,8 @@ class AppConfig implements AppConfigInterface
                             'id' => $productId,
                             'sku' => $sku,
                             'name' => $name,
+                            'image' => null,
+                            'media_gallery' => [],
                             'final_price' => 0.0,
                             'regular_price' => 0.0,
                             'currency' => $this->priceCurrency->getCurrency()->getCurrencyCode(),
@@ -236,6 +247,34 @@ class AppConfig implements AppConfigInterface
                                 $productInfo['qty'] = (float)$stockItem->getQty();
                             } catch (\Exception $e) {
                                 // Stock info not available, keep defaults
+                            }
+
+                            // Get image URL (main product image, or placeholder if none)
+                            try {
+                                $imageUrl = $this->productHelper->getImageUrl($product);
+                                $productInfo['image'] = $imageUrl ? (string)$imageUrl : null;
+                            } catch (\Exception $e) {
+                                // Image not available, keep null
+                            }
+
+                            // Get media gallery - all images in full/original size
+                            try {
+                                $galleryImages = $product->getMediaGalleryImages();
+                                if ($galleryImages instanceof \Magento\Framework\Data\Collection) {
+                                    $mediaGallery = [];
+                                    foreach ($galleryImages as $galleryImage) {
+                                        $url = $galleryImage->getData('url');
+                                        if ($url) {
+                                            $mediaGallery[] = [
+                                                'url' => (string)$url,
+                                                'label' => (string)($galleryImage->getData('label') ?? $galleryImage->getLabel() ?? '')
+                                            ];
+                                        }
+                                    }
+                                    $productInfo['media_gallery'] = $mediaGallery;
+                                }
+                            } catch (\Exception $e) {
+                                // Media gallery not available, keep empty array
                             }
                         } catch (\Exception $e) {
                             // Product not found or error loading, use provided data only
