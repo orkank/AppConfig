@@ -230,6 +230,43 @@ class Save extends Action
             }
             $data['categories_value'] = !empty($categories) ? json_encode($categories, JSON_UNESCAPED_UNICODE) : '';
 
+            // Handle CMS pages value
+            $cmsPagesData = null;
+            if (isset($data['selected_cms_pages']) && !empty(trim($data['selected_cms_pages']))) {
+                $cmsPagesData = $data['selected_cms_pages'];
+            }
+            $cmsPages = [];
+            if (!empty($cmsPagesData)) {
+                if (is_array($cmsPagesData)) {
+                    $cmsPages = $cmsPagesData;
+                } else {
+                    $decoded = json_decode($cmsPagesData, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $cmsPages = $decoded;
+                    }
+                }
+            }
+            $data['cms_pages_value'] = !empty($cmsPages) ? json_encode($cmsPages, JSON_UNESCAPED_UNICODE) : '';
+
+            // Handle CMS include content (Yes/No select - values are "1" or "0" string)
+            $val = $data['cms_include_content'] ?? 0;
+            $data['cms_include_content'] = ($val === 1 || $val === '1' || $val === true) ? 1 : 0;
+
+            // Set value_type based on which primary value column has data
+            if (!empty($data['cms_pages_value'])) {
+                $data['value_type'] = 'cms';
+            } elseif (!empty($data['products_value'])) {
+                $data['value_type'] = 'products';
+            } elseif (!empty($data['categories_value'])) {
+                $data['value_type'] = 'category';
+            } elseif (!empty($data['json_value'])) {
+                $data['value_type'] = 'json';
+            } elseif (!empty($data['file_path'])) {
+                $data['value_type'] = 'file';
+            } elseif (!empty($data['text_value'])) {
+                $data['value_type'] = 'text';
+            }
+
             // Final safety check: if file_path is explicitly empty string, ensure it's cleared
             // This MUST be the last check before setting data to model
             // This handles the case where file_path is sent as empty string in payload

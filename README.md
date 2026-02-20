@@ -15,6 +15,7 @@
         -   Integrated file picker for media selection
     -   Product Selector (Select products from the catalog)
     -   Category Selector (Select categories from the tree)
+    -   CMS Pages Selector (Select CMS pages with optional content inclusion)
     -   File Upload
 -   **REST API**: Exposes configuration data via public endpoints for easy consumption by mobile apps (iOS/Android) or PWA.
 -   **Import/Export**: Tools to migrate configuration between environments.
@@ -66,6 +67,9 @@ Create new configuration entries.
         -   **File Picker**: Each value field includes a file picker icon to select files from media gallery
     -   *Products*: Opens a product grid to select specific products. The API will return their IDs or basic data.
     -   *Category*: Opens a category tree to select categories.
+    -   *CMS Pages*: Opens a CMS pages grid to select pages. Use the "Include CMS page content in API output" (Yes/No) option:
+        -   **Yes**: API returns full page data including the HTML `content` field.
+        -   **No**: Returns only `id`, `permalink`, `title`, and `update_time` (no content).
     -   *File*: Upload generic files or images.
 
 #### JSON Editor Features
@@ -137,6 +141,15 @@ Return all active key-value pairs formatted for the application.
         {
           "id": 32,
           "name": "Category Name"
+        }
+      ],
+      "cms_pages": [
+        {
+          "id": 5,
+          "permalink": "about-us",
+          "title": "About Us",
+          "update_time": "2024-01-15 10:30:00",
+          "content": "<p>Full page HTML content when include option is enabled</p>"
         }
       ],
       "version": "1.0.0"
@@ -213,6 +226,13 @@ query {
       id
       name
     }
+    cms_pages {
+      id
+      permalink
+      title
+      update_time
+      content
+    }
   }
 }
 ```
@@ -246,6 +266,13 @@ query {
     categories {
       id
       name
+    }
+    cms_pages {
+      id
+      permalink
+      title
+      update_time
+      content
     }
   }
 }
@@ -318,7 +345,26 @@ query {
           }
         ],
         "categories": [
+        ],
+        "cms_pages": null
+      },
+      {
+        "key": "ABOUT_PAGES",
+        "group": "HOMEPAGE",
+        "type": "cms",
+        "version": null,
+        "text": null,
+        "file": null,
+        "json": null,
+        "products": null,
+        "categories": null,
+        "cms_pages": [
           {
+            "id": 5,
+            "permalink": "about-us",
+            "title": "About Us",
+            "update_time": "2024-01-15 10:30:00"
+          }
             "id": 32,
             "name": "Bilim"
           }
@@ -330,10 +376,11 @@ query {
 ```
 
 **Note:**
-- The response includes all value fields (`text`, `file`, `json`, `products`, `categories`), but only the field matching the `type` will have a value. All other fields will be `null`.
+- The response includes all value fields (`text`, `file`, `json`, `products`, `categories`, `cms_pages`), but only the field matching the `type` will have a value. All other fields will be `null`.
 - The `json` field returns a JSON string that should be parsed on the client side using `JSON.parse()`.
 - The `products` field returns an array of product objects with `id`, `sku`, `name`, `image`, `media_gallery`, `final_price`, `regular_price`, `currency`, `is_in_stock`, and `qty` fields. The `image` field contains the main product image URL. The `media_gallery` field contains all product images in full size as `{url, label}` objects. Price and stock information is loaded from Magento catalog.
 - The `categories` field returns an array of category objects with `id` and `name` fields (same format as REST API).
+- The `cms_pages` field returns an array of CMS page objects. When "Include content" is enabled: `id`, `permalink`, `title`, `update_time`, and `content`. When disabled: only `id`, `permalink`, `title`, and `update_time` (no `content`).
 
 You can access the configuration data programmatically within Magento (e.g., in Blocks, ViewModels, or other Models) by injecting the `IDangerous\AppConfig\Api\AppConfigInterface`.
 

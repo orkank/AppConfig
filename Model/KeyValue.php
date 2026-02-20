@@ -55,6 +55,26 @@ class KeyValue extends AbstractModel
     {
         return $this->getData('categories_value');
     }
+
+    /**
+     * Get CMS pages value
+     *
+     * @return string|null
+     */
+    public function getCmsPagesValue()
+    {
+        return $this->getData('cms_pages_value');
+    }
+
+    /**
+     * Get CMS include content flag
+     *
+     * @return bool
+     */
+    public function getCmsIncludeContent()
+    {
+        return (bool) $this->getData('cms_include_content');
+    }
 }
 
 

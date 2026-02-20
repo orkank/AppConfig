@@ -78,6 +78,10 @@ class MigrateValueTypeToColumns implements DataPatchInterface
                     $updateData['categories_value'] = $value;
                     break;
 
+                case 'cms':
+                    $updateData['cms_pages_value'] = $value;
+                    break;
+
                 default:
                     // For unknown types, put in text_value
                     $updateData['text_value'] = $value;

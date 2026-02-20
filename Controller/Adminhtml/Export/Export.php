@@ -89,7 +89,7 @@ class Export extends Action
                 $valueType = $this->resolveValueType($keyValue);
                 $value = $this->getExportValueByType($keyValue, $valueType);
 
-                $exportData['keyvalues'][] = [
+                $kvData = [
                     'group_code' => $this->getGroupCodeById($keyValue->getGroupId()),
                     'key_name' => $keyValue->getKeyName(),
                     'name' => $keyValue->getData('name'),
@@ -99,6 +99,10 @@ class Export extends Action
                     'is_active' => (int)$keyValue->getIsActive(),
                     'version' => $keyValue->getVersion()
                 ];
+                if ($valueType === 'cms') {
+                    $kvData['cms_include_content'] = (int)$keyValue->getCmsIncludeContent();
+                }
+                $exportData['keyvalues'][] = $kvData;
             }
 
             $resultRaw = $this->resultRawFactory->create();
@@ -199,6 +203,9 @@ class Export extends Action
         }
         if (!empty($keyValue->getCategoriesValue())) {
             return 'categories';
+        }
+        if (!empty($keyValue->getCmsPagesValue())) {
+            return 'cms';
         }
         if (!empty($keyValue->getFilePath())) {
             return 'file';

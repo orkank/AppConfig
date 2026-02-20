@@ -168,6 +168,43 @@
                 <dataScope>selected_categories</dataScope>
             </settings>
         </field>
+        <field name="selected_cms_pages" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                    <item name="component" xsi:type="string">IDangerous_AppConfig/js/form/element/cms-selector</item>
+                    <item name="elementTmpl" xsi:type="string">IDangerous_AppConfig/form/element/cms-selector</item>
+                    <item name="modalUrl" xsi:type="url" path="appconfig/keyvalue/cmsgrid"/>
+                    <item name="pageFetchUrl" xsi:type="url" path="appconfig/keyvalue/getcmspages"/>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">CMS Pages</label>
+                <dataScope>selected_cms_pages</dataScope>
+            </settings>
+        </field>
+        <field name="cms_include_content" formElement="select">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                    <item name="default" xsi:type="number">0</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Include CMS page content in API output</label>
+                <dataScope>cms_include_content</dataScope>
+                <notice translate="true">When enabled, full page content (HTML) will be included. When disabled, only id, permalink, title and last modified will be returned.</notice>
+            </settings>
+            <formElements>
+                <select>
+                    <settings>
+                        <options class="Magento\Config\Model\Config\Source\Yesno"/>
+                    </settings>
+                </select>
+            </formElements>
+        </field>
         <field name="file" formElement="fileUploader">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

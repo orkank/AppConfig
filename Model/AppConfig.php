@@ -17,6 +17,7 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Helper\Product as ProductHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
+use Magento\Cms\Api\PageRepositoryInterface;
 
 class AppConfig implements AppConfigInterface
 {
@@ -71,6 +72,11 @@ class AppConfig implements AppConfigInterface
     protected $productHelper;
 
     /**
+     * @var PageRepositoryInterface
+     */
+    protected $pageRepository;
+
+    /**
      * @param ConfigDataFactory $configDataFactory
      * @param GroupDataFactory $groupDataFactory
      * @param GroupCollectionFactory $groupCollectionFactory
@@ -81,6 +87,7 @@ class AppConfig implements AppConfigInterface
      * @param StockRegistryInterface $stockRegistry
      * @param PriceCurrencyInterface $priceCurrency
      * @param ProductHelper $productHelper
+     * @param PageRepositoryInterface $pageRepository
      */
     public function __construct(
         ConfigDataFactory $configDataFactory,
@@ -92,7 +99,8 @@ class AppConfig implements AppConfigInterface
         ProductRepositoryInterface $productRepository,
         StockRegistryInterface $stockRegistry,
         PriceCurrencyInterface $priceCurrency,
-        ProductHelper $productHelper
+        ProductHelper $productHelper,
+        PageRepositoryInterface $pageRepository
     ) {
         $this->configDataFactory = $configDataFactory;
         $this->groupDataFactory = $groupDataFactory;
@@ -104,6 +112,7 @@ class AppConfig implements AppConfigInterface
         $this->stockRegistry = $stockRegistry;
         $this->priceCurrency = $priceCurrency;
         $this->productHelper = $productHelper;
+        $this->pageRepository = $pageRepository;
     }
 
     /**
@@ -299,6 +308,45 @@ class AppConfig implements AppConfigInterface
                 }
             }
 
+            $cmsPagesValue = null;
+            $cmsPagesValueStr = $item->getCmsPagesValue() ?? '';
+            $includeContent = (bool) $item->getCmsIncludeContent();
+            if (!empty($cmsPagesValueStr)) {
+                $decoded = json_decode($cmsPagesValueStr, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $cmsPagesValue = [];
+                    foreach ($decoded as $pageData) {
+                        $pageId = null;
+                        if (is_array($pageData) && isset($pageData['id'])) {
+                            $pageId = (int) $pageData['id'];
+                        } elseif (is_numeric($pageData)) {
+                            $pageId = (int) $pageData;
+                        }
+                        if (!$pageId) {
+                            continue;
+                        }
+                        try {
+                            $page = $this->pageRepository->getById($pageId);
+                            $pageInfo = [
+                                'id' => (int) $page->getId(),
+                                'permalink' => $page->getIdentifier(),
+                                'title' => $page->getTitle(),
+                                'update_time' => $page->getUpdateTime()
+                            ];
+                            if ($includeContent) {
+                                $pageInfo['content'] = $page->getContent();
+                            }
+                            $cmsPagesValue[] = $pageInfo;
+                        } catch (\Exception $e) {
+                            // Page not found, skip
+                        }
+                    }
+                    if (empty($cmsPagesValue)) {
+                        $cmsPagesValue = null;
+                    }
+                }
+            }
+
             $keyValueData = [
                 'key' => $item->getKeyName(),
                 'text' => $textValue,
@@ -306,6 +354,7 @@ class AppConfig implements AppConfigInterface
                 'json' => $jsonValue,
                 'products' => $productsValue,
                 'categories' => $categoriesValue,
+                'cms_pages' => $cmsPagesValue,
                 'version' => $item->getVersion()
             ];
 

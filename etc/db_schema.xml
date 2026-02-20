@@ -33,6 +33,8 @@
         <column xsi:type="text" name="json_value" nullable="true" comment="JSON Value"/>
         <column xsi:type="text" name="products_value" nullable="true" comment="Products Value (JSON array)"/>
         <column xsi:type="text" name="categories_value" nullable="true" comment="Categories Value (JSON array)"/>
+        <column xsi:type="text" name="cms_pages_value" nullable="true" comment="CMS Pages Value (JSON array)"/>
+        <column xsi:type="smallint" name="cms_include_content" padding="5" unsigned="true" nullable="false" default="0" comment="Include CMS page content in API output"/>
         <column xsi:type="smallint" name="is_active" padding="5" unsigned="true" nullable="false" default="1" comment="Is Active"/>
         <column xsi:type="varchar" name="version" nullable="true" length="50" comment="Version (e.g., 4.0.10+80)"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>

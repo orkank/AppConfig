@@ -19,7 +19,8 @@ class ValueType implements OptionSourceInterface
             ['value' => 'file', 'label' => __('File')],
             ['value' => 'json', 'label' => __('JSON')],
             ['value' => 'products', 'label' => __('Products')],
-            ['value' => 'category', 'label' => __('Category')]
+            ['value' => 'category', 'label' => __('Category')],
+            ['value' => 'cms', 'label' => __('CMS Pages')]
         ];
     }
 }

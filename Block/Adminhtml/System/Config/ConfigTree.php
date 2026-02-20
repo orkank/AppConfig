@@ -278,6 +278,16 @@ class ConfigTree extends Field
             }
         }
 
+        // CMS pages value
+        $cmsPagesValue = $keyValue->getCmsPagesValue();
+        if ($cmsPagesValue) {
+            $decoded = json_decode($cmsPagesValue, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $count = count($decoded);
+                $previews[] = 'CMS: ' . $count . ' page(s)';
+            }
+        }
+
         // Fallback to old value_type based logic for backward compatibility
         if (empty($previews)) {
             $valueType = $keyValue->getValueType();
@@ -307,11 +317,18 @@ class ConfigTree extends Field
 
                 case 'products':
                 case 'category':
+                case 'cms':
                     if ($value) {
                         $decoded = json_decode($value, true);
                         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                             $count = count($decoded);
-                            return $valueType === 'products' ? $count . ' product(s)' : $count . ' category(ies)';
+                            if ($valueType === 'products') {
+                                return $count . ' product(s)';
+                            }
+                            if ($valueType === 'category') {
+                                return $count . ' category(ies)';
+                            }
+                            return $count . ' CMS page(s)';
                         }
                     }
                     return 'Empty';

@@ -9,13 +9,22 @@ type Query {
 type AppConfigKeyValue {
     key: String @doc(description: "Configuration Key")
     group: String @doc(description: "Configuration Group Code")
-    type: String @doc(description: "Data Type (text, json, products, categories, file)")
+    type: String @doc(description: "Data Type (text, json, products, categories, cms, file)")
     version: String @doc(description: "Minimum App Version Requirement")
     text: String @doc(description: "Text value (for type: text)")
     file: String @doc(description: "File URL (for type: file)")
     json: String @doc(description: "JSON value (for type: json) - JSON string that should be parsed on the client side")
     products: [AppConfigProduct] @doc(description: "Products array (for type: products)")
     categories: [AppConfigCategory] @doc(description: "Categories array (for type: categories)")
+    cms_pages: [AppConfigCmsPage] @doc(description: "CMS pages array (for type: cms)")
+}
+
+type AppConfigCmsPage {
+    id: Int @doc(description: "CMS Page ID")
+    permalink: String @doc(description: "URL identifier/permalink")
+    title: String @doc(description: "Page title")
+    update_time: String @doc(description: "Last modification time")
+    content: String @doc(description: "Page content (HTML) - only when include content option is enabled")
 }
 
 type AppConfigProduct {

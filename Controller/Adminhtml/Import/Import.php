@@ -333,7 +333,8 @@ class Import extends Action
                 'value_type' => $item['value_type'] ?? $item['valueType'] ?? $item['Value Type'] ?? 'text',
                 'file_path' => $item['file_path'] ?? $item['filePath'] ?? $item['File Path'] ?? null,
                 'is_active' => $item['is_active'] ?? $item['isActive'] ?? $item['Is Active'] ?? 1,
-                'version' => $item['version'] ?? $item['Version'] ?? null
+                'version' => $item['version'] ?? $item['Version'] ?? null,
+                'cms_include_content' => $item['cms_include_content'] ?? $item['cmsIncludeContent'] ?? null
             ];
             $normalizedKeyvalues[] = $normalized;
         }
@@ -409,7 +410,7 @@ class Import extends Action
                     $value = $row['Value'] ?? '';
                     $valueType = $row['Value Type'] ?? 'text';
                     // Normalize JSON values from CSV (backslashes can get mangled)
-                    if (in_array($valueType, ['products', 'json', 'category', 'categories']) && !empty($value)) {
+                    if (in_array($valueType, ['products', 'json', 'category', 'categories', 'cms']) && !empty($value)) {
                         $value = $this->normalizeJsonString($value);
                     }
                     $importData['keyvalues'][] = [
@@ -446,6 +447,8 @@ class Import extends Action
             'json_value' => '',
             'products_value' => '',
             'categories_value' => '',
+            'cms_pages_value' => '',
+            'cms_include_content' => 0,
             'value' => '' // deprecated, but keep for backward compat
         ];
 
@@ -465,6 +468,11 @@ class Import extends Action
             case 'category':
             case 'categories':
                 $result['categories_value'] = $normalizedJson;
+                $result['value'] = $normalizedJson;
+                break;
+
+            case 'cms':
+                $result['cms_pages_value'] = $normalizedJson;
                 $result['value'] = $normalizedJson;
                 break;
 

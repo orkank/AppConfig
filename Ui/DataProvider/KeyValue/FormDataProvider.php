@@ -125,11 +125,18 @@ class FormDataProvider extends AbstractDataProvider
                 $data['selected_categories'] = $item->getCategoriesValue();
             }
 
+            // Map cms_pages_value to selected_cms_pages for form
+            if ($item->getCmsPagesValue()) {
+                $data['selected_cms_pages'] = $item->getCmsPagesValue();
+            }
+
             // Ensure all new columns are present
             $data['text_value'] = $item->getTextValue() ?? '';
             $data['json_value'] = $item->getJsonValue() ?? '';
             $data['products_value'] = $item->getProductsValue() ?? '';
             $data['categories_value'] = $item->getCategoriesValue() ?? '';
+            $data['cms_pages_value'] = $item->getCmsPagesValue() ?? '';
+            $data['cms_include_content'] = (int) ($item->getData('cms_include_content') ?? 0);
 
             $this->loadedData[$item->getId()] = $data;
         }
