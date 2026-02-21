@@ -413,7 +413,7 @@ class Import extends Action
                     if (in_array($valueType, ['products', 'json', 'category', 'categories', 'cms']) && !empty($value)) {
                         $value = $this->normalizeJsonString($value);
                     }
-                    $importData['keyvalues'][] = [
+                    $kvItem = [
                         'group_code' => !empty($row['Code']) ? $row['Code'] : null,
                         'key_name' => $row['Key Name'],
                         'name' => $row['Admin Description'] ?? $row['Name'] ?? null,
@@ -423,6 +423,10 @@ class Import extends Action
                         'is_active' => isset($row['Is Active']) ? (int)$row['Is Active'] : 1,
                         'version' => $row['Version'] ?? null
                     ];
+                    if (isset($row['CMS Include Content']) && $row['CMS Include Content'] !== '') {
+                        $kvItem['cms_include_content'] = (int)$row['CMS Include Content'];
+                    }
+                    $importData['keyvalues'][] = $kvItem;
                 }
             }
         }

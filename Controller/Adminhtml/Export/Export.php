@@ -101,6 +101,8 @@ class Export extends Action
                 ];
                 if ($valueType === 'cms') {
                     $kvData['cms_include_content'] = (int)$keyValue->getCmsIncludeContent();
+                } else {
+                    $kvData['cms_include_content'] = '';
                 }
                 $exportData['keyvalues'][] = $kvData;
             }
@@ -139,7 +141,7 @@ class Export extends Action
         $output = fopen('php://temp', 'r+');
 
         // Write Groups
-        fputcsv($output, ['Type', 'Name', 'Code', 'Description', 'Is Active', 'Version', 'Key Name', 'Admin Description', 'Value', 'Value Type', 'File Path']);
+        fputcsv($output, ['Type', 'Name', 'Code', 'Description', 'Is Active', 'Version', 'Key Name', 'Admin Description', 'Value', 'Value Type', 'File Path', 'CMS Include Content']);
 
         foreach ($exportData['groups'] as $group) {
             fputcsv($output, [
@@ -149,6 +151,7 @@ class Export extends Action
                 $group['description'] ?? '',
                 $group['is_active'],
                 $group['version'] ?? '',
+                '',
                 '',
                 '',
                 '',
@@ -170,7 +173,8 @@ class Export extends Action
                 $keyValue['name'] ?? '',
                 $keyValue['value'] ?? '',
                 $keyValue['value_type'] ?? 'text',
-                $keyValue['file_path'] ?? ''
+                $keyValue['file_path'] ?? '',
+                $keyValue['cms_include_content'] ?? ''
             ]);
         }
 
@@ -230,6 +234,8 @@ class Export extends Action
             case 'category':
             case 'categories':
                 return $keyValue->getCategoriesValue();
+            case 'cms':
+                return $keyValue->getCmsPagesValue();
             case 'file':
                 return $keyValue->getFilePath();
             case 'text':
