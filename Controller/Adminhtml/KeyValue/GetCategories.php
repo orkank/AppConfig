@@ -87,7 +87,8 @@ class GetCategories extends Action
             foreach ($collection as $category) {
                 $categories[] = [
                     'id' => $category->getId(),
-                    'name' => $category->getName()
+                    'name' => $category->getName(),
+                    'product_limit' => ''
                 ];
             }
 

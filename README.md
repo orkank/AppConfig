@@ -66,7 +66,8 @@ Create new configuration entries.
         -   **Raw JSON Mode**: Direct JSON editing for advanced users
         -   **File Picker**: Each value field includes a file picker icon to select files from media gallery
     -   *Products*: Opens a product grid to select specific products. The API will return their IDs or basic data.
-    -   *Category*: Opens a category tree to select categories.
+    -   *Category*: Opens a category tree to select categories. Each category has an optional "Products to include" input. When set (e.g. 5), the API returns that many products from that category in the output.
+    -   **Custom product attributes**: Below Products and Categories, an input field accepts comma-separated attribute codes (e.g. `author,publisher,isbn`). When set, these custom attributes (only those that exist in Magento) are included in the product output—for both directly selected products and products pulled from categories. Useful for book metadata (author, ISBN), size charts, or any product-specific custom attributes.
     -   *CMS Pages*: Opens a CMS pages grid to select pages. Use the "Include CMS page content in API output" (Yes/No) option:
         -   **Yes**: API returns full page data including the HTML `content` field.
         -   **No**: Returns only `id`, `permalink`, `title`, and `update_time` (no content).
@@ -134,13 +135,31 @@ Return all active key-value pairs formatted for the application.
           "regular_price": 50.00,
           "currency": "TRY",
           "is_in_stock": true,
-          "qty": 10.0
+          "qty": 10.0,
+          "author": "John Doe",
+          "isbn": "978-3-16-148410-0"
         }
       ],
       "categories": [
         {
           "id": 32,
           "name": "Category Name"
+        },
+        {
+          "id": 5,
+          "name": "Roman",
+          "products": [
+            {
+              "id": 101,
+              "sku": "BOOK-001",
+              "name": "Book Title",
+              "image": "https://example.com/media/...",
+              "final_price": 45.50,
+              "regular_price": 50.00,
+              "currency": "TRY",
+              "is_in_stock": true
+            }
+          ]
         }
       ],
       "cms_pages": [
@@ -168,7 +187,7 @@ Return all active key-value pairs formatted for the application.
 }
 ```
 
-**Note:** The `products` field includes price, stock, and image information loaded from Magento catalog. The `image` field contains the main product image URL (or Magento placeholder if no image is set). The `media_gallery` field contains all product images in full/original size with URL and label. All price values are in the store's base currency.
+**Note:** The `products` field includes price, stock, and image information loaded from Magento catalog. The `image` field contains the main product image URL (or Magento placeholder if no image is set). The `media_gallery` field contains all product images in full/original size with URL and label. All price values are in the store's base currency. If "Custom product attributes" is configured (e.g. `author,isbn`), those attributes are added to each product object when they exist in the catalog.
 
 #### Get Groups
 Return a list of available configuration groups.
@@ -341,7 +360,9 @@ query {
             "regular_price": 50.00,
             "currency": "TRY",
             "is_in_stock": true,
-            "qty": 10.0
+            "qty": 10.0,
+            "author": "Yazar Adı",
+            "isbn": "978-3-16-148410-0"
           }
         ],
         "categories": [
@@ -378,7 +399,7 @@ query {
 **Note:**
 - The response includes all value fields (`text`, `file`, `json`, `products`, `categories`, `cms_pages`), but only the field matching the `type` will have a value. All other fields will be `null`.
 - The `json` field returns a JSON string that should be parsed on the client side using `JSON.parse()`.
-- The `products` field returns an array of product objects with `id`, `sku`, `name`, `image`, `media_gallery`, `final_price`, `regular_price`, `currency`, `is_in_stock`, and `qty` fields. The `image` field contains the main product image URL. The `media_gallery` field contains all product images in full size as `{url, label}` objects. Price and stock information is loaded from Magento catalog.
+- The `products` field returns an array of product objects with `id`, `sku`, `name`, `image`, `media_gallery`, `final_price`, `regular_price`, `currency`, `is_in_stock`, and `qty` fields. When "Custom product attributes" is configured, those attributes (e.g. `author`, `isbn`) are also included in each product. The `image` field contains the main product image URL. The `media_gallery` field contains all product images in full size as `{url, label}` objects. Price and stock information is loaded from Magento catalog.
 - The `categories` field returns an array of category objects with `id` and `name` fields (same format as REST API).
 - The `cms_pages` field returns an array of CMS page objects. When "Include content" is enabled: `id`, `permalink`, `title`, `update_time`, and `content`. When disabled: only `id`, `permalink`, `title`, and `update_time` (no `content`).
 

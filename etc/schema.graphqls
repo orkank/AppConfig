@@ -48,4 +48,5 @@ type AppConfigMediaGalleryEntry {
 type AppConfigCategory {
     id: Int @doc(description: "Category ID")
     name: String @doc(description: "Category Name")
+    products: [AppConfigProduct] @doc(description: "Products from category - when product_limit is set in admin")
 }

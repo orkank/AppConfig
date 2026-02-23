@@ -254,7 +254,8 @@ class Import extends Action
                     'group_id' => $groupId,
                     'file_path' => $keyValueFilePath ?? $keyValueData['file_path'] ?? null,
                     'is_active' => (int)($keyValueData['is_active'] ?? $keyValueData['Is Active'] ?? 1),
-                    'version' => $keyValueData['version'] ?? $keyValueData['Version'] ?? null
+                    'version' => $keyValueData['version'] ?? $keyValueData['Version'] ?? null,
+                    'product_custom_attributes' => trim((string)($keyValueData['product_custom_attributes'] ?? $keyValueData['productCustomAttributes'] ?? ''))
                 ]);
                 if ($keyValueName !== null) {
                     $modelData['name'] = $keyValueName;
@@ -334,7 +335,8 @@ class Import extends Action
                 'file_path' => $item['file_path'] ?? $item['filePath'] ?? $item['File Path'] ?? null,
                 'is_active' => $item['is_active'] ?? $item['isActive'] ?? $item['Is Active'] ?? 1,
                 'version' => $item['version'] ?? $item['Version'] ?? null,
-                'cms_include_content' => $item['cms_include_content'] ?? $item['cmsIncludeContent'] ?? null
+                'cms_include_content' => $item['cms_include_content'] ?? $item['cmsIncludeContent'] ?? null,
+                'product_custom_attributes' => trim((string)($item['product_custom_attributes'] ?? $item['productCustomAttributes'] ?? $item['Product Custom Attributes'] ?? ''))
             ];
             $normalizedKeyvalues[] = $normalized;
         }
@@ -425,6 +427,9 @@ class Import extends Action
                     ];
                     if (isset($row['CMS Include Content']) && $row['CMS Include Content'] !== '') {
                         $kvItem['cms_include_content'] = (int)$row['CMS Include Content'];
+                    }
+                    if (isset($row['Product Custom Attributes']) && $row['Product Custom Attributes'] !== '') {
+                        $kvItem['product_custom_attributes'] = trim((string)$row['Product Custom Attributes']);
                     }
                     $importData['keyvalues'][] = $kvItem;
                 }

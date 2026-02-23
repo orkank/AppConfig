@@ -137,6 +137,7 @@ class FormDataProvider extends AbstractDataProvider
             $data['categories_value'] = $item->getCategoriesValue() ?? '';
             $data['cms_pages_value'] = $item->getCmsPagesValue() ?? '';
             $data['cms_include_content'] = (int) ($item->getData('cms_include_content') ?? 0);
+            $data['product_custom_attributes'] = trim((string) ($item->getData('product_custom_attributes') ?? ''));
 
             $this->loadedData[$item->getId()] = $data;
         }

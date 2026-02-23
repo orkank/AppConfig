@@ -33,6 +33,7 @@
         <column xsi:type="text" name="json_value" nullable="true" comment="JSON Value"/>
         <column xsi:type="text" name="products_value" nullable="true" comment="Products Value (JSON array)"/>
         <column xsi:type="text" name="categories_value" nullable="true" comment="Categories Value (JSON array)"/>
+        <column xsi:type="varchar" name="product_custom_attributes" nullable="true" length="500" comment="Custom product attributes (comma-separated) to include in API output"/>
         <column xsi:type="text" name="cms_pages_value" nullable="true" comment="CMS Pages Value (JSON array)"/>
         <column xsi:type="smallint" name="cms_include_content" padding="5" unsigned="true" nullable="false" default="0" comment="Include CMS page content in API output"/>
         <column xsi:type="smallint" name="is_active" padding="5" unsigned="true" nullable="false" default="1" comment="Is Active"/>

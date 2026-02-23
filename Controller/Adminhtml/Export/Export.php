@@ -104,6 +104,7 @@ class Export extends Action
                 } else {
                     $kvData['cms_include_content'] = '';
                 }
+                $kvData['product_custom_attributes'] = trim((string)($keyValue->getData('product_custom_attributes') ?? ''));
                 $exportData['keyvalues'][] = $kvData;
             }
 
@@ -141,7 +142,7 @@ class Export extends Action
         $output = fopen('php://temp', 'r+');
 
         // Write Groups
-        fputcsv($output, ['Type', 'Name', 'Code', 'Description', 'Is Active', 'Version', 'Key Name', 'Admin Description', 'Value', 'Value Type', 'File Path', 'CMS Include Content']);
+        fputcsv($output, ['Type', 'Name', 'Code', 'Description', 'Is Active', 'Version', 'Key Name', 'Admin Description', 'Value', 'Value Type', 'File Path', 'CMS Include Content', 'Product Custom Attributes']);
 
         foreach ($exportData['groups'] as $group) {
             fputcsv($output, [
@@ -151,6 +152,8 @@ class Export extends Action
                 $group['description'] ?? '',
                 $group['is_active'],
                 $group['version'] ?? '',
+                '',
+                '',
                 '',
                 '',
                 '',
@@ -174,7 +177,8 @@ class Export extends Action
                 $keyValue['value'] ?? '',
                 $keyValue['value_type'] ?? 'text',
                 $keyValue['file_path'] ?? '',
-                $keyValue['cms_include_content'] ?? ''
+                $keyValue['cms_include_content'] ?? '',
+                $keyValue['product_custom_attributes'] ?? ''
             ]);
         }
 

@@ -14,6 +14,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Helper\Product as ProductHelper;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Cms\Api\PageRepositoryInterface;
@@ -66,6 +67,11 @@ class AppConfigResolver implements ResolverInterface
     protected $pageRepository;
 
     /**
+     * @var ProductCollectionFactory
+     */
+    protected $productCollectionFactory;
+
+    /**
      * @param KeyValueCollectionFactory $keyValueCollectionFactory
      * @param GroupCollectionFactory $groupCollectionFactory
      * @param StoreManagerInterface $storeManager
@@ -75,6 +81,7 @@ class AppConfigResolver implements ResolverInterface
      * @param PriceCurrencyInterface $priceCurrency
      * @param ProductHelper $productHelper
      * @param PageRepositoryInterface $pageRepository
+     * @param ProductCollectionFactory $productCollectionFactory
      */
     public function __construct(
         KeyValueCollectionFactory $keyValueCollectionFactory,
@@ -85,7 +92,8 @@ class AppConfigResolver implements ResolverInterface
         StockRegistryInterface $stockRegistry,
         PriceCurrencyInterface $priceCurrency,
         ProductHelper $productHelper,
-        PageRepositoryInterface $pageRepository
+        PageRepositoryInterface $pageRepository,
+        ProductCollectionFactory $productCollectionFactory
     ) {
         $this->keyValueCollectionFactory = $keyValueCollectionFactory;
         $this->groupCollectionFactory = $groupCollectionFactory;
@@ -96,6 +104,7 @@ class AppConfigResolver implements ResolverInterface
         $this->priceCurrency = $priceCurrency;
         $this->productHelper = $productHelper;
         $this->pageRepository = $pageRepository;
+        $this->productCollectionFactory = $productCollectionFactory;
     }
 
     /**
@@ -280,6 +289,11 @@ class AppConfigResolver implements ResolverInterface
                             } catch (\Exception $e) {
                                 // Media gallery not available, keep empty array
                             }
+
+                            $customAttrCodes = $item->getProductCustomAttributesList();
+                            if (!empty($customAttrCodes)) {
+                                $productInfo = $this->addCustomAttributesToProductInfo($productInfo, $product, $customAttrCodes);
+                            }
                         } catch (\Exception $e) {
                             // Product not found or error loading, use provided data only
                         }
@@ -338,33 +352,25 @@ class AppConfigResolver implements ResolverInterface
             if (!empty($categoriesValueStr)) {
                 $decoded = json_decode($categoriesValueStr, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                    // Return full category objects (id, name) - same as REST API
-                    $categoriesValue = array_map(function($category) {
-                        if (is_array($category)) {
-                            // Ensure id is integer
-                            if (isset($category['id'])) {
-                                $category['id'] = is_numeric($category['id']) ? (int)$category['id'] : null;
-                            }
-                            return [
-                                'id' => isset($category['id']) && is_numeric($category['id']) ? (int)$category['id'] : null,
-                                'name' => $category['name'] ?? ''
-                            ];
-                        } elseif (is_numeric($category)) {
-                            // If it's just a numeric ID, return minimal object
-                            return [
-                                'id' => (int)$category,
-                                'name' => ''
-                            ];
+                    $categoriesValue = [];
+                    foreach ($decoded as $catData) {
+                        $catId = is_array($catData) ? ((int)($catData['id'] ?? 0)) : (int)$catData;
+                        $catName = is_array($catData) ? ($catData['name'] ?? '') : '';
+                        $productLimit = is_array($catData) ? ((int)($catData['product_limit'] ?? 0)) : 0;
+
+                        $categoryOut = [
+                            'id' => $catId,
+                            'name' => $catName
+                        ];
+
+                        if ($productLimit > 0 && $catId) {
+                            $customAttrCodes = $item->getProductCustomAttributesList();
+                            $categoryProducts = $this->getProductsFromCategory($catId, $productLimit, $customAttrCodes);
+                            $categoryOut['products'] = $categoryProducts;
                         }
-                        return null;
-                    }, $decoded);
-                    // Filter out null values
-                    $categoriesValue = array_filter($categoriesValue, function($category) {
-                        return $category !== null && isset($category['id']);
-                    });
-                    // Re-index array
-                    $categoriesValue = array_values($categoriesValue);
-                    // Return null if empty
+
+                        $categoriesValue[] = $categoryOut;
+                    }
                     if (empty($categoriesValue)) {
                         $categoriesValue = null;
                     }
@@ -390,6 +396,114 @@ class AppConfigResolver implements ResolverInterface
                 'version' => $item->getVersion()
             ];
         }
+
+        return $result;
+    }
+
+    /**
+     * Add custom attributes to product info array (only attributes that exist in system)
+     *
+     * @param array $productInfo
+     * @param \Magento\Catalog\Api\Data\ProductInterface $product
+     * @param string[] $attrCodes
+     * @return array
+     */
+    protected function addCustomAttributesToProductInfo(array $productInfo, $product, array $attrCodes): array
+    {
+        foreach ($attrCodes as $code) {
+            $code = trim($code);
+            if ($code === '') {
+                continue;
+            }
+            $attr = $product->getResource()->getAttribute($code);
+            if (!$attr) {
+                continue;
+            }
+            $val = $product->getAttributeText($code);
+            if ($val === null || $val === false) {
+                $val = $product->getData($code);
+            }
+            if ($val !== null && $val !== '') {
+                $productInfo[$code] = is_array($val) ? $val : (is_scalar($val) ? $val : (string) $val);
+            }
+        }
+        return $productInfo;
+    }
+
+    /**
+     * Get products from category with enrichment
+     *
+     * @param int $categoryId
+     * @param int $limit
+     * @param string[] $customAttrCodes
+     * @return array
+     */
+    protected function getProductsFromCategory(int $categoryId, int $limit, array $customAttrCodes = []): array
+    {
+        $result = [];
+        try {
+            $storeId = $this->storeManager->getStore()->getId();
+            $collection = $this->productCollectionFactory->create();
+            $collection->setStoreId($storeId)
+                ->addAttributeToSelect(['name', 'sku', 'price'])
+                ->addCategoriesFilter(['in' => [$categoryId]])
+                ->setPageSize($limit)
+                ->setCurPage(1);
+
+            foreach ($collection as $product) {
+                $productId = (int) $product->getId();
+                $productInfo = [
+                    'id' => $productId,
+                    'sku' => $product->getSku(),
+                    'name' => $product->getName(),
+                    'image' => null,
+                    'media_gallery' => [],
+                    'final_price' => 0.0,
+                    'regular_price' => 0.0,
+                    'currency' => $this->priceCurrency->getCurrency()->getCurrencyCode(),
+                    'is_in_stock' => false,
+                    'qty' => 0.0
+                ];
+
+                try {
+                    $fullProduct = $this->productRepository->getById($productId, false, $storeId);
+                    try {
+                        $finalPrice = $fullProduct->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();
+                        $regularPrice = $fullProduct->getPriceInfo()->getPrice('regular_price')->getAmount()->getValue();
+                        $productInfo['final_price'] = (float) $finalPrice;
+                        $productInfo['regular_price'] = (float) $regularPrice;
+                    } catch (\Exception $e) {}
+                    try {
+                        $stockItem = $this->stockRegistry->getStockItem($productId);
+                        $productInfo['is_in_stock'] = (bool) $stockItem->getIsInStock();
+                        $productInfo['qty'] = (float) $stockItem->getQty();
+                    } catch (\Exception $e) {}
+                    try {
+                        $imageUrl = $this->productHelper->getImageUrl($fullProduct);
+                        $productInfo['image'] = $imageUrl ? (string) $imageUrl : null;
+                    } catch (\Exception $e) {}
+                    try {
+                        $galleryImages = $fullProduct->getMediaGalleryImages();
+                        if ($galleryImages instanceof \Magento\Framework\Data\Collection) {
+                            foreach ($galleryImages as $galleryImage) {
+                                $url = $galleryImage->getData('url');
+                                if ($url) {
+                                    $productInfo['media_gallery'][] = [
+                                        'url' => (string) $url,
+                                        'label' => (string) ($galleryImage->getData('label') ?? $galleryImage->getLabel() ?? '')
+                                    ];
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {}
+                    if (!empty($customAttrCodes)) {
+                        $productInfo = $this->addCustomAttributesToProductInfo($productInfo, $fullProduct, $customAttrCodes);
+                    }
+                } catch (\Exception $e) {}
+
+                $result[] = $productInfo;
+            }
+        } catch (\Exception $e) {}
 
         return $result;
     }

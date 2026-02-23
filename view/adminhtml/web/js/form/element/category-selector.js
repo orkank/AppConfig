@@ -10,7 +10,7 @@ define([
 
     return Abstract.extend({
         defaults: {
-            template: 'IDangerous_AppConfig/form/element/product-selector', // Reuse the same template as it handles list display
+            template: 'IDangerous_AppConfig/form/element/category-selector',
             selectedCategories: [],
             modalUrl: '',
             categoryFetchUrl: '',
@@ -68,52 +68,61 @@ define([
                 $form = $('form').has('[name="form_key"]').first();
             }
 
-            // Hook into jQuery submit to ensure data is there right before send
-            $form.on('submit', function() {
-                self.updateHiddenInputs();
-                return true;
-            });
-
-             // Also hook into the Save button click if possible
-             $('[data-ui-id="page-actions-toolbar-save-button"]').on('click', function() {
-                 self.updateHiddenInputs();
-            });
-
-            $('#save').on('click', function() {
+            $form.on('submit.appconfig_cat', function() {
                 self.updateHiddenInputs();
             });
 
-             // Periodically sync just in case
+            $('[data-ui-id="page-actions-toolbar-save-button"]').on('mousedown.appconfig_cat', function() {
+                self.updateHiddenInputs();
+            });
+
+            $('#save').on('mousedown.appconfig_cat', function() {
+                self.updateHiddenInputs();
+            });
+
             setInterval(function() {
                 if (self.getCurrentValueType() === 'category') {
                     self.updateHiddenInputs();
                 }
-            }, 2000);
+            }, 1500);
         },
 
         /**
-         * Update hidden inputs in the DOM
+         * Update hidden inputs in the DOM - also sync product_limit from DOM inputs
+         * (Knockout binding may not reliably update plain objects in Magento UI form context)
          */
         updateHiddenInputs: function() {
-            var categories = this.selectedCategories();
-            var jsonValue = JSON.stringify(categories);
             var $form = $('form[data-form-type="other"]');
             if (!$form.length) $form = $('form').first();
 
-            // 1. Update/Create 'value' field (textarea or hidden)
+            var categories = this.selectedCategories();
+            $form.find('.category-product-limit').each(function() {
+                var $input = $(this);
+                var catId = $input.data('category-id');
+                var limit = $input.val();
+                if (catId !== undefined && catId !== null) {
+                    var cat = categories.find(function(c) {
+                        return String(c.id) === String(catId);
+                    });
+                    if (cat) {
+                        cat.product_limit = limit !== '' && !isNaN(parseInt(limit)) ? String(limit) : '';
+                    }
+                }
+            });
+
+            var jsonValue = JSON.stringify(categories);
+            this.value(jsonValue);
+
             var $valueField = $form.find('[name="value"]');
             if ($valueField.length) {
                 var currentType = this.getCurrentValueType();
                 if (currentType === 'category') {
                     $valueField.val(jsonValue);
                 }
-            } else {
-                 if (this.getCurrentValueType() === 'category') {
-                    $form.append($('<input>').attr({type: 'hidden', name: 'value', value: jsonValue}));
-                 }
+            } else if (this.getCurrentValueType() === 'category') {
+                $form.append($('<input>').attr({type: 'hidden', name: 'value', value: jsonValue}));
             }
 
-            // 2. Update/Create 'selected_categories' field
             var $selectedField = $form.find('[name="selected_categories"]');
             if ($selectedField.length) {
                 $selectedField.val(jsonValue);
@@ -157,10 +166,16 @@ define([
                 try {
                     var categories = JSON.parse(value);
                     if (Array.isArray(categories)) {
+                        categories = categories.map(function (c) {
+                            if (typeof c.product_limit === 'undefined' || c.product_limit === null) {
+                                c.product_limit = c.product_limit || '';
+                            }
+                            return c;
+                        });
                         this.selectedCategories(categories);
                     }
                 } catch (e) {
-                    // console.warn('Invalid JSON for categories:', e);
+                    // Invalid JSON
                 }
             }
         },
@@ -309,10 +324,11 @@ define([
                 if (response.success && response.categories) {
                     var currentCategories = self.selectedCategories();
 
-                    // Merge
+                    // Merge - add product_limit for new categories
                     response.categories.forEach(function(newCat) {
                         var exists = currentCategories.some(function(c) { return c.id == newCat.id; });
                         if (!exists) {
+                            newCat.product_limit = newCat.product_limit || '';
                             currentCategories.push(newCat);
                         }
                     });

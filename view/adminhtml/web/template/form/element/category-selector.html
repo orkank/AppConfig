@@ -18,12 +18,20 @@
             </div>
             <ul class="selected-categories" style="list-style: none; padding: 0; margin-top: 10px;">
                 <!-- ko foreach: selectedCategories -->
-                <li style="padding: 5px; border: 1px solid #ccc; margin-bottom: 5px; background: #f5f5f5;">
+                <li style="padding: 8px; border: 1px solid #ccc; margin-bottom: 5px; background: #f5f5f5; display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <span data-bind="text: name"></span>
-                    <span style="color: #999; margin-left: 10px;" data-bind="text: 'ID: ' + id"></span>
+                    <span style="color: #999;" data-bind="text: 'ID: ' + id"></span>
+                    <span style="color: #666; font-size: 12px;" data-bind="i18n: 'Products to include:'"></span>
+                    <input type="number"
+                           class="category-product-limit"
+                           min="0"
+                           max="999"
+                           placeholder="0"
+                           style="width: 60px; padding: 4px;"
+                           data-bind="attr: { 'data-category-id': id }, value: product_limit, valueUpdate: 'input', event: { change: $parent.updateValue, blur: $parent.updateValue }"/>
                     <button type="button"
                             class="action-delete"
-                            style="float: right;"
+                            style="margin-left: auto;"
                             data-bind="click: $parent.removeCategory.bind($parent, $data)">
                         <span data-bind="i18n: 'Remove'"></span>
                     </button>

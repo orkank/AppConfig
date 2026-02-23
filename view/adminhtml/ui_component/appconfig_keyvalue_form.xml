@@ -168,6 +168,19 @@
                 <dataScope>selected_categories</dataScope>
             </settings>
         </field>
+        <field name="product_custom_attributes" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">keyvalue</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Custom product attributes for API output</label>
+                <dataScope>product_custom_attributes</dataScope>
+                <notice translate="true">Comma-separated attribute codes (e.g. author, publisher, isbn). Only attributes that exist in the system will be included in product output. Used for Products and Category products.</notice>
+            </settings>
+        </field>
         <field name="selected_cms_pages" formElement="input">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

@@ -230,6 +230,11 @@ class Save extends Action
             }
             $data['categories_value'] = !empty($categories) ? json_encode($categories, JSON_UNESCAPED_UNICODE) : '';
 
+            // Handle product custom attributes (comma-separated)
+            $data['product_custom_attributes'] = isset($data['product_custom_attributes'])
+                ? trim((string) $data['product_custom_attributes'])
+                : '';
+
             // Handle CMS pages value
             $cmsPagesData = null;
             if (isset($data['selected_cms_pages']) && !empty(trim($data['selected_cms_pages']))) {

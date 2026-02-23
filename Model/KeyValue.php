@@ -75,6 +75,21 @@ class KeyValue extends AbstractModel
     {
         return (bool) $this->getData('cms_include_content');
     }
+
+    /**
+     * Get product custom attributes (comma-separated codes) as array
+     *
+     * @return string[]
+     */
+    public function getProductCustomAttributesList(): array
+    {
+        $str = $this->getData('product_custom_attributes') ?? '';
+        if (empty(trim($str))) {
+            return [];
+        }
+        $codes = array_map('trim', explode(',', $str));
+        return array_values(array_filter($codes));
+    }
 }
 
 
