@@ -271,16 +271,29 @@ define([
                 updateJsonValue();
             };
 
-            // Add nested row (array of objects mode)
-            var addNestedRow = function() {
+            // Renumber nested row labels and data-row-index after add/remove/duplicate
+            var renumberNestedRows = function() {
+                $('#nested-pairs-container .nested-row').each(function(index) {
+                    $(this).attr('data-row-index', index);
+                    $(this).find('strong').first().text($t('Row') + ' ' + (index + 1));
+                });
+            };
+
+            // Build one nested-mode row DOM (optional rowObj fills key-value fields).
+            var createNestedRowDom = function(rowObj) {
+                rowObj = rowObj || {};
                 var rowId = generateFilePickerId();
-                var rowIndex = $('#nested-pairs-container .nested-row').length;
-                var rowHtml = '<div class="nested-row admin__field" data-row-index="' + rowIndex + '" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background: #f9f9f9;">' +
+                var rowHtml = '<div class="nested-row admin__field" data-row-index="0" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background: #f9f9f9;">' +
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
-                    '<strong style="color: #666;">' + $t('Row') + ' ' + (rowIndex + 1) + '</strong>' +
-                    '<button type="button" class="action-delete remove-nested-row" title="' + $t('Remove Row') + '">' +
+                    '<strong style="color: #666;">' + $t('Row') + '</strong>' +
+                    '<div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">' +
+                    '<button type="button" class="action-secondary duplicate-nested-row" title="' + escapeHtml($t('Duplicate Row')) + '">' +
+                    '<span>' + $t('Duplicate Row') + '</span>' +
+                    '</button>' +
+                    '<button type="button" class="action-delete remove-nested-row" title="' + escapeHtml($t('Remove Row')) + '">' +
                     '<span>' + $t('Remove Row') + '</span>' +
                     '</button>' +
+                    '</div>' +
                     '</div>' +
                     '<div class="nested-row-keyvalue-container" style="margin-left: 10px;">' +
                     '</div>' +
@@ -289,7 +302,46 @@ define([
                     '</button>' +
                     '</div>';
 
-                $('#nested-pairs-container').append(rowHtml);
+                var $row = $(rowHtml);
+                var $kvContainer = $row.find('.nested-row-keyvalue-container');
+
+                for (var key in rowObj) {
+                    if (rowObj.hasOwnProperty(key)) {
+                        var value = rowObj[key];
+                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                            value = JSON.stringify(value);
+                        } else if (Array.isArray(value)) {
+                            value = JSON.stringify(value);
+                        }
+
+                        var pairId = generateFilePickerId();
+                        var valueInputId = 'nested-value-' + pairId;
+                        var pairHtml = '<div class="nested-row-kv-pair admin__field" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">' +
+                            '<div style="flex: 1;">' +
+                            '<input type="text" class="admin__control-text nested-row-key" value="' + escapeHtml(key) + '" placeholder="' + $t('Key') + '" style="width: 100%;">' +
+                            '</div>' +
+                            '<div style="flex: 2; display: flex; align-items: center;">' +
+                            '<input type="text" id="' + valueInputId + '" class="admin__control-text nested-row-value" value="' + escapeHtml(String(value)) + '" placeholder="' + $t('Value') + '" style="flex: 1;">' +
+                            createFilePickerIcon(valueInputId) +
+                            '</div>' +
+                            '<div>' +
+                            '<button type="button" class="action-delete remove-nested-row-kv" title="' + escapeHtml($t('Remove')) + '">' +
+                            '<span>' + $t('Remove') + '</span>' +
+                            '</button>' +
+                            '</div>' +
+                            '</div>';
+
+                        $kvContainer.append(pairHtml);
+                    }
+                }
+
+                return $row;
+            };
+
+            // Add nested row (array of objects mode)
+            var addNestedRow = function() {
+                $('#nested-pairs-container').append(createNestedRowDom({}));
+                renumberNestedRows();
                 updateJsonValue();
             };
 
@@ -429,62 +481,10 @@ define([
                             continue;
                         }
 
-                        var rowId = generateFilePickerId();
-                        var rowHtml = '<div class="nested-row admin__field" data-row-index="' + i + '" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background: #f9f9f9;">' +
-                            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
-                            '<strong style="color: #666;">' + $t('Row') + ' ' + (i + 1) + '</strong>' +
-                            '<button type="button" class="action-delete remove-nested-row" title="' + $t('Remove Row') + '">' +
-                            '<span>' + $t('Remove Row') + '</span>' +
-                            '</button>' +
-                            '</div>' +
-                            '<div class="nested-row-keyvalue-container" style="margin-left: 10px;">' +
-                            '</div>' +
-                            '<button type="button" class="action-secondary add-keyvalue-to-row" data-row-id="' + rowId + '" style="margin-top: 5px;">' +
-                            '<span>+ ' + $t('Add Key-Value') + '</span>' +
-                            '</button>' +
-                            '</div>';
-
-                        $container.append(rowHtml);
-                        var $row = $container.find('.nested-row').last();
-                        var $kvContainer = $row.find('.nested-row-keyvalue-container');
-
-                        // Add key-value pairs to this row
-                        for (var key in rowObj) {
-                            if (rowObj.hasOwnProperty(key)) {
-                                var value = rowObj[key];
-                                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                                    value = JSON.stringify(value);
-                                } else if (Array.isArray(value)) {
-                                    value = JSON.stringify(value);
-                                }
-
-                                var pairId = generateFilePickerId();
-                                var valueInputId = 'nested-value-' + pairId;
-                                var pairHtml = '<div class="nested-row-kv-pair admin__field" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">' +
-                                    '<div style="flex: 1;">' +
-                                    '<input type="text" class="admin__control-text nested-row-key" value="' + escapeHtml(key) + '" placeholder="' + $t('Key') + '" style="width: 100%;">' +
-                                    '</div>' +
-                                    '<div style="flex: 2; display: flex; align-items: center;">' +
-                                    '<input type="text" id="' + valueInputId + '" class="admin__control-text nested-row-value" value="' + escapeHtml(String(value)) + '" placeholder="' + $t('Value') + '" style="flex: 1;">' +
-                                    createFilePickerIcon(valueInputId) +
-                                    '</div>' +
-                                    '<div>' +
-                                    '<button type="button" class="action-delete remove-nested-row-kv" title="' + $t('Remove') + '">' +
-                                    '<span>' + $t('Remove') + '</span>' +
-                                    '</button>' +
-                                    '</div>' +
-                                    '</div>';
-
-                                $kvContainer.append(pairHtml);
-                            }
-                        }
+                        $container.append(createNestedRowDom(rowObj));
                     }
 
-                    // Update row indices
-                    $('#nested-pairs-container .nested-row').each(function(index) {
-                        $(this).attr('data-row-index', index);
-                        $(this).find('strong').text($t('Row') + ' ' + (index + 1));
-                    });
+                    renumberNestedRows();
                 } catch (e) {
                     console.error('Error parsing JSON for nested mode:', e);
                     $('#nested-pairs-container').empty();
@@ -663,13 +663,32 @@ define([
                 updateJsonValue();
             });
 
+            $(document).on('click', '.duplicate-nested-row', function() {
+                var $sourceRow = $(this).closest('.nested-row');
+                var rowData = {};
+
+                $sourceRow.find('.nested-row-kv-pair').each(function() {
+                    var key = $(this).find('.nested-row-key').val();
+                    var value = $(this).find('.nested-row-value').val();
+
+                    if (key && key.trim() !== '') {
+                        try {
+                            rowData[key] = JSON.parse(value);
+                        } catch (e) {
+                            rowData[key] = value;
+                        }
+                    }
+                });
+
+                var $newRow = createNestedRowDom(rowData);
+                $sourceRow.after($newRow);
+                renumberNestedRows();
+                updateJsonValue();
+            });
+
             $(document).on('click', '.remove-nested-row', function() {
                 $(this).closest('.nested-row').remove();
-                // Update row indices
-                $('#nested-pairs-container .nested-row').each(function(index) {
-                    $(this).attr('data-row-index', index);
-                    $(this).find('strong').text($t('Row') + ' ' + (index + 1));
-                });
+                renumberNestedRows();
                 updateJsonValue();
             });
 

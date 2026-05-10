@@ -125,3 +125,4 @@
 "Add Key-Value Pair","Anahtar-Değer Çifti Ekle"
 "Raw JSON","Ham JSON"
 "Enter valid JSON format. Example: {\"key1\": \"value1\", \"key2\": \"value2\"}","Geçerli JSON formatı girin. Örnek: {\"key1\": \"value1\", \"key2\": \"value2\"}"
+"Duplicate Row","Satırı Çoğalt"
