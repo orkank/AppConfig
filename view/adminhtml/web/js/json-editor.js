@@ -112,11 +112,18 @@ define([
                     return directiveUrl;
                 }
 
+                // Reverse Magento\Framework\Url\Encoder (PHP): strtr(base64_encode($s), '+/=', '-_~').
+                // Legacy JS Base64.mageEncode uses ',' for '=' — keep both for compatibility.
+                var toStandardBase64 = function (segment) {
+                    return segment
+                        .replace(/-/g, '+')
+                        .replace(/_/g, '/')
+                        .replace(/~/g, '=')
+                        .replace(/,/g, '=');
+                };
+
                 try {
-                    // Decode the directive - Magento uses URL-safe Base64 encoding
-                    var encodedDirective = directiveMatch[1];
-                    // Replace URL-safe characters back to standard Base64
-                    encodedDirective = encodedDirective.replace(/-/g, '+').replace(/_/g, '/').replace(/,/g, '=');
+                    var encodedDirective = toStandardBase64(directiveMatch[1]);
 
                     // Decode Base64 using browser's atob or fallback
                     var decodedDirective = '';
@@ -139,11 +146,10 @@ define([
                     }
                 } catch (e) {
                     console.error('Error converting directive URL:', e);
-                    // If conversion fails, try to use Magento's Base64 utility if available
+                    // Fallback: very old admin JS used Base64.mageEncode (= → comma), not PHP Url\Encoder (= → ~).
                     if (typeof window.Base64 !== 'undefined' && window.Base64.mageDecode) {
                         try {
-                            var encodedDirective = directiveMatch[1];
-                            var decodedDirective = window.Base64.mageDecode(decodeURIComponent(encodedDirective));
+                            var decodedDirective = window.Base64.mageDecode(decodeURIComponent(directiveMatch[1]));
                             var mediaMatch = decodedDirective.match(/media\s+url=["']([^"']+)["']/);
                             if (mediaMatch && mediaMatch[1]) {
                                 var mediaPath = mediaMatch[1].replace(/^\//, '');
@@ -151,7 +157,7 @@ define([
                                 return baseUrl + '/' + mediaPath;
                             }
                         } catch (e2) {
-                            console.error('Error with Base64.mageDecode:', e2);
+                            console.error('Error with Base64.mageDecode fallback:', e2);
                         }
                     }
                 }
@@ -190,10 +196,23 @@ define([
                 // Store the current value to detect changes
                 var previousValue = $targetInput.val();
 
+                // MediabrowserUtility.setPathId() requires current_tree_path in the URL (see mage/adminhtml/browser.js).
+                // Same pattern as Magento_Ui image-uploader.js — idEncode matches PHP Wysiwyg Images::idEncode (+/= → :_-).
+                var encodeTreePathId = function (plain) {
+                    if (typeof window.btoa !== 'function') {
+                        return '';
+                    }
+                    return window.btoa(plain)
+                        .replace(/\+/g, ':')
+                        .replace(/\//g, '_')
+                        .replace(/=/g, '-');
+                };
+
                 var wUrl = mediaBrowserUrl +
                     '/target_element_id/' + targetInputId + '/' +
                     'store/' + storeId + '/' +
-                    'type/' + type + '/?isAjax=true';
+                    'type/' + type + '/?isAjax=true' +
+                    '&current_tree_path=' + encodeURIComponent(encodeTreePathId('wysiwyg'));
 
                 window.MediabrowserUtility.openDialog(
                     wUrl,

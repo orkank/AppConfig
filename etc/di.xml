@@ -13,4 +13,29 @@
     <type name="Magento\Framework\Webapi\Rest\Response\RendererFactory">
         <plugin name="force_json_content_type" type="IDangerous\AppConfig\Plugin\ForceJsonContentType" sortOrder="10"/>
     </type>
+
+    <!-- Uppy POST overwrites "type" with file MIME (video/mp4); normalize before Storage::uploadFile. -->
+    <type name="Magento\Cms\Controller\Adminhtml\Wysiwyg\Images\Upload">
+        <plugin name="idangerous_wysiwyg_upload_type_from_mime" type="IDangerous\AppConfig\Plugin\Cms\Controller\Adminhtml\Wysiwyg\Images\UploadPlugin" sortOrder="10"/>
+    </type>
+
+    <!-- WYSIWYG: file_allowed MIME'leri; listing için MergeVideoIntoAllowedExtensionsPlugin (CMS allowed merge sırası). -->
+    <type name="Magento\Cms\Model\Wysiwyg\Images\Storage">
+        <plugin name="idangerous_wysiwyg_skip_resize_non_raster" type="IDangerous\AppConfig\Plugin\Cms\Model\Wysiwyg\Images\Storage\SkipResizeForNonRasterPlugin" sortOrder="10"/>
+        <plugin name="idangerous_wysiwyg_merge_video_allowed_extensions" type="IDangerous\AppConfig\Plugin\Cms\Model\Wysiwyg\Images\Storage\MergeVideoIntoAllowedExtensionsPlugin" sortOrder="20"/>
+        <arguments>
+            <argument name="extensions" xsi:type="array">
+                <item name="file_allowed" xsi:type="array">
+                    <!-- checkMimeType uses finfo; MP4 is often reported as application/mp4 or video/mp4 -->
+                    <item name="mp4" xsi:type="string">video/mp4</item>
+                    <item name="mp4_application" xsi:type="string">application/mp4</item>
+                    <item name="mp4_audio" xsi:type="string">audio/mp4</item>
+                    <item name="webm" xsi:type="string">video/webm</item>
+                    <item name="ogv" xsi:type="string">video/ogg</item>
+                    <item name="mov" xsi:type="string">video/quicktime</item>
+                    <item name="m4v" xsi:type="string">video/x-m4v</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
 </config>

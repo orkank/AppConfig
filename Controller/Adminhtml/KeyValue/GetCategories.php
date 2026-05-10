@@ -80,7 +80,7 @@ class GetCategories extends Action
 
         try {
             $collection = $this->categoryCollectionFactory->create();
-            $collection->addAttributeToSelect('name')
+            $collection->addAttributeToSelect(['name', 'url_key'])
                 ->addFieldToFilter('entity_id', ['in' => $categoryIds]);
 
             $categories = [];
@@ -88,6 +88,7 @@ class GetCategories extends Action
                 $categories[] = [
                     'id' => $category->getId(),
                     'name' => $category->getName(),
+                    'url_key' => (string) $category->getUrlKey(),
                     'product_limit' => ''
                 ];
             }

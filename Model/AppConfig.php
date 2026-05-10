@@ -13,6 +13,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Helper\Product as ProductHelper;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
@@ -58,6 +59,11 @@ class AppConfig implements AppConfigInterface
     protected $productRepository;
 
     /**
+     * @var CategoryRepositoryInterface
+     */
+    protected $categoryRepository;
+
+    /**
      * @var StockRegistryInterface
      */
     protected $stockRegistry;
@@ -90,6 +96,7 @@ class AppConfig implements AppConfigInterface
      * @param StoreManagerInterface $storeManager
      * @param ScopeConfigInterface $scopeConfig
      * @param ProductRepositoryInterface $productRepository
+     * @param CategoryRepositoryInterface $categoryRepository
      * @param StockRegistryInterface $stockRegistry
      * @param PriceCurrencyInterface $priceCurrency
      * @param ProductHelper $productHelper
@@ -104,6 +111,7 @@ class AppConfig implements AppConfigInterface
         StoreManagerInterface $storeManager,
         ScopeConfigInterface $scopeConfig,
         ProductRepositoryInterface $productRepository,
+        CategoryRepositoryInterface $categoryRepository,
         StockRegistryInterface $stockRegistry,
         PriceCurrencyInterface $priceCurrency,
         ProductHelper $productHelper,
@@ -117,6 +125,7 @@ class AppConfig implements AppConfigInterface
         $this->storeManager = $storeManager;
         $this->scopeConfig = $scopeConfig;
         $this->productRepository = $productRepository;
+        $this->categoryRepository = $categoryRepository;
         $this->stockRegistry = $stockRegistry;
         $this->priceCurrency = $priceCurrency;
         $this->productHelper = $productHelper;
@@ -209,11 +218,13 @@ class AppConfig implements AppConfigInterface
                         $productId = null;
                         $sku = '';
                         $name = '';
+                        $urlKey = '';
 
                         if (is_array($productData)) {
                             $productId = isset($productData['id']) ? (int)$productData['id'] : null;
                             $sku = $productData['sku'] ?? '';
                             $name = $productData['name'] ?? '';
+                            $urlKey = $productData['url_key'] ?? '';
                         } elseif (is_numeric($productData)) {
                             $productId = (int)$productData;
                         }
@@ -227,6 +238,7 @@ class AppConfig implements AppConfigInterface
                             'id' => $productId,
                             'sku' => $sku,
                             'name' => $name,
+                            'url_key' => $urlKey,
                             'image' => null,
                             'media_gallery' => [],
                             'final_price' => 0.0,
@@ -246,6 +258,9 @@ class AppConfig implements AppConfigInterface
                             }
                             if (empty($name)) {
                                 $productInfo['name'] = $product->getName();
+                            }
+                            if (empty($urlKey)) {
+                                $productInfo['url_key'] = (string)$product->getData('url_key');
                             }
 
                             // Get price information
@@ -323,10 +338,21 @@ class AppConfig implements AppConfigInterface
                         $catId = is_array($catData) ? ((int)($catData['id'] ?? 0)) : (int)$catData;
                         $catName = is_array($catData) ? ($catData['name'] ?? '') : '';
                         $productLimit = is_array($catData) ? ((int)($catData['product_limit'] ?? 0)) : 0;
+                        $catUrlKey = is_array($catData) ? (string)($catData['url_key'] ?? '') : '';
+                        if ($catId && $catUrlKey === '') {
+                            try {
+                                $storeId = (int) $this->storeManager->getStore()->getId();
+                                $category = $this->categoryRepository->get($catId, $storeId);
+                                $catUrlKey = (string) $category->getUrlKey();
+                            } catch (\Exception $e) {
+                                $catUrlKey = '';
+                            }
+                        }
 
                         $categoryOut = [
                             'id' => $catId,
-                            'name' => $catName
+                            'name' => $catName,
+                            'url_key' => $catUrlKey
                         ];
 
                         if ($productLimit > 0 && $catId) {
@@ -459,7 +485,7 @@ class AppConfig implements AppConfigInterface
             $storeId = $this->storeManager->getStore()->getId();
             $collection = $this->productCollectionFactory->create();
             $collection->setStoreId($storeId)
-                ->addAttributeToSelect(['name', 'sku', 'price'])
+                ->addAttributeToSelect(['name', 'sku', 'price', 'url_key'])
                 ->addCategoriesFilter(['in' => [$categoryId]])
                 ->setPageSize($limit)
                 ->setCurPage(1);
@@ -470,6 +496,7 @@ class AppConfig implements AppConfigInterface
                     'id' => $productId,
                     'sku' => $product->getSku(),
                     'name' => $product->getName(),
+                    'url_key' => (string) $product->getData('url_key'),
                     'image' => null,
                     'media_gallery' => [],
                     'final_price' => 0.0,
@@ -481,6 +508,7 @@ class AppConfig implements AppConfigInterface
 
                 try {
                     $fullProduct = $this->productRepository->getById($productId, false, $storeId);
+                    $productInfo['url_key'] = (string) $fullProduct->getData('url_key');
 
                     try {
                         $finalPrice = $fullProduct->getPriceInfo()->getPrice('final_price')->getAmount()->getValue();

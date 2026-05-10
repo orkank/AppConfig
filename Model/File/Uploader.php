@@ -55,39 +55,32 @@ class Uploader extends MediaStorageUploader
 
     /**
      * Check protected/allowed extension
-     * Override to allow SVG and other file types that might be in protected list
+     *
+     * Upload/Save controllers pass an explicit whitelist. Those types must be accepted even when
+     * Stores > Configuration > General > File > "Protected File Extensions" lists them (e.g. mp4, svg),
+     * otherwise NotProtectedExtension rejects before the file reaches storage.
      *
      * @param string $extension
      * @return boolean
      */
     public function checkAllowedExtension($extension)
     {
-        $extension = strtolower($extension);
+        $extension = strtolower((string) $extension);
 
-        // First check if extension is in our allowed list (Framework\File\Uploader check)
         $allowedExtensions = $this->_allowedExtensions ?? [];
-        if (!empty($allowedExtensions) && !in_array($extension, $allowedExtensions)) {
-            return false;
-        }
+        if (!empty($allowedExtensions)) {
+            if (!in_array($extension, $allowedExtensions, true)) {
+                return false;
+            }
+            // Same rules as Framework\File\Uploader::checkAllowedExtension (alphanumeric ext only)
+            if ($extension !== '' && preg_match('/[^a-z0-9]/i', $extension)) {
+                return false;
+            }
 
-        // For SVG and XML (which are in protected list), skip protected extension validator
-        // These are in protected list for security, but we allow them for this module
-        $safeExtensionsThatMayBeProtected = ['svg', 'xml'];
-
-        if (in_array($extension, $safeExtensionsThatMayBeProtected)) {
-            // Skip protected extension validator, directly return true if in allowed list
-            // We already checked allowedExtensions above, so if we reach here, it's allowed
             return true;
         }
 
-        // For other extensions, use normal validation with protected extension check
-        // Validate with protected file types validator
-        if (!$this->_validator->isValid($extension)) {
-            return false;
-        }
-
-        // All checks passed
-        return true;
+        return parent::checkAllowedExtension($extension);
     }
 
     /**

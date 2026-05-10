@@ -145,7 +145,8 @@ class GetProducts extends Action
                 $productData[] = [
                     'id' => (int)$product->getId(),
                     'sku' => $product->getSku(),
-                    'name' => $product->getName()
+                    'name' => $product->getName(),
+                    'url_key' => (string)$product->getData('url_key')
                 ];
             }
 

@@ -14,6 +14,14 @@ use Magento\Ui\DataProvider\AbstractDataProvider;
 class FormDataProvider extends AbstractDataProvider
 {
     /**
+     * Must match file field: client-side Uppy runs validate-file-type before any XHR.
+     */
+    private const FILE_FIELD_ALLOWED_EXTENSIONS =
+        'jpg jpeg png gif svg webp bmp ico tiff tif heic heif avif '
+        . 'mp4 avi mov wmv flv webm mkv 3gp ogv '
+        . 'doc docx pdf xls xlsx ppt pptx odt ods odp rtf csv txt zip json xml rar 7z';
+
+    /**
      * @var DataPersistorInterface
      */
     protected $dataPersistor;
@@ -60,6 +68,26 @@ class FormDataProvider extends AbstractDataProvider
         $this->storeManager = $storeManager;
         $this->filesystem = $filesystem;
         parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
+    }
+
+    /**
+     * Force allowedExtensions into UI meta so Magento_Ui file-uploader receives mp4/video types.
+     * XML alone sometimes fails to merge into the JS component defaults.
+     *
+     * @return array
+     */
+    public function getMeta(): array
+    {
+        $meta = parent::getMeta();
+        if (!isset($meta['general']['children']['file'])) {
+            return $meta;
+        }
+
+        $list = self::FILE_FIELD_ALLOWED_EXTENSIONS;
+        $meta['general']['children']['file']['arguments']['data']['config']['allowedExtensions'] = $list;
+        $meta['general']['children']['file']['children']['formElements']['children']['fileUploader']['arguments']['data']['config']['allowedExtensions'] = $list;
+
+        return $meta;
     }
 
     /**

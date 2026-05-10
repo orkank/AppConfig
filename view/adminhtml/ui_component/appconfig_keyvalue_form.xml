@@ -222,14 +222,7 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="source" xsi:type="string">keyvalue</item>
-                    <item name="elementTmpl" xsi:type="string">ui/form/element/uploader/uploader</item>
-                    <item name="previewTmpl" xsi:type="string">Magento_Catalog/image-preview</item>
-                    <item name="uploaderConfig" xsi:type="array">
-                        <item name="url" xsi:type="url" path="appconfig/keyvalue/upload"/>
-                    </item>
                     <item name="openDialogTitle" xsi:type="string" translate="true">File Upload</item>
-                    <item name="allowedExtensions" xsi:type="string">jpg jpeg png gif svg webp bmp ico tiff tif heic heif avif mp4 avi mov wmv flv webm mkv 3gp ogv doc docx pdf xls xlsx ppt pptx odt ods odp rtf csv txt zip json xml rar 7z</item>
-                    <item name="maxFileSize" xsi:type="number">6097152</item>
                 </item>
             </argument>
             <settings>
@@ -237,6 +230,19 @@
                 <label translate="true">File</label>
                 <dataScope>file</dataScope>
             </settings>
+            <formElements>
+                <fileUploader>
+                    <settings>
+                        <elementTmpl>ui/form/element/uploader/uploader</elementTmpl>
+                        <previewTmpl>Magento_Catalog/image-preview</previewTmpl>
+                        <allowedExtensions>jpg jpeg png gif svg webp bmp ico tiff tif heic heif avif mp4 avi mov wmv flv webm mkv 3gp ogv doc docx pdf xls xlsx ppt pptx odt ods odp rtf csv txt zip json xml rar 7z</allowedExtensions>
+                        <maxFileSize>104857600</maxFileSize>
+                        <uploaderConfig>
+                            <param xsi:type="url" name="url" path="appconfig/keyvalue/upload"/>
+                        </uploaderConfig>
+                    </settings>
+                </fileUploader>
+            </formElements>
         </field>
         <field name="version" formElement="input">
             <argument name="data" xsi:type="array">

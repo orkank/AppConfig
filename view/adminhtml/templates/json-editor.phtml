@@ -1,6 +1,6 @@
 <?php
 /**
- * @var \Magento\Framework\View\Element\Template $block
+ * @var \IDangerous\AppConfig\Block\Adminhtml\KeyValue\JsonEditor $block
  */
 ?>
 <div id="json-editor-container" style="display: none;">
@@ -86,8 +86,8 @@ require(['IDangerous_AppConfig/js/json-editor'], function(jsonEditorInit) {
     console.log('JSON Editor template script loaded');
     if (typeof jsonEditorInit === 'function') {
         jsonEditorInit({
-            mediaBrowserUrl: '<?= $block->escapeUrl($block->getUrl('cms/wysiwyg_images/index')) ?>',
-            mediaBaseUrl: '<?= $block->escapeUrl($block->getUrl('', ['_type' => \Magento\Framework\UrlInterface::URL_TYPE_MEDIA])) ?>'
+            mediaBrowserUrl: '<?= $block->escapeUrl($block->getWysiwygImagesIndexUrl()) ?>',
+            mediaBaseUrl: '<?= $block->escapeUrl($block->getMediaBaseUrl()) ?>'
         });
     }
 });

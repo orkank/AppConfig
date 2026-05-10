@@ -31,6 +31,7 @@ type AppConfigProduct {
     id: Int @doc(description: "Product ID")
     sku: String @doc(description: "Product SKU")
     name: String @doc(description: "Product Name")
+    url_key: String @doc(description: "Product URL key (slug)")
     image: String @doc(description: "Main product image URL (or placeholder if no image)")
     media_gallery: [AppConfigMediaGalleryEntry] @doc(description: "All product images in full/original size")
     final_price: Float @doc(description: "Final price (includes all discounts)")
@@ -48,5 +49,6 @@ type AppConfigMediaGalleryEntry {
 type AppConfigCategory {
     id: Int @doc(description: "Category ID")
     name: String @doc(description: "Category Name")
+    url_key: String @doc(description: "Category URL key (slug)")
     products: [AppConfigProduct] @doc(description: "Products from category - when product_limit is set in admin")
 }
