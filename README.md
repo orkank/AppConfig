@@ -2,13 +2,7 @@
 
 **App Config** is a Magento 2 module that stores **structured configuration** for mobile apps, PWAs, and **headless front‑ends** (e.g. Next.js): groups, typed key-value rows, and stable **REST** / **GraphQL** read APIs. An optional **headless integration** layer adds **shared-secret HMAC**, **admin delegation → short-lived JWT**, JSON sync, **storefront URL → key** routing via `url_rewrite`, and write APIs for sync and cleanup.
 
-**Version:** see [`composer.json`](composer.json) and the **module changelog** — [`CHANGELOG.md`](./CHANGELOG.md) next to this README (`app/code/IDangerous/AppConfig/`). This is **not** the Magento installation / repository root `CHANGELOG.md`; release notes for **IDangerous_AppConfig** live only in that file.
-
-### Why we built this (real-world scenario)
-
-We run **Magento as the system of record** and **Next.js as the authoring and delivery surface**. This module exists so that **Next.js can create and update storefront “pages” end-to-end**: editors design in Next.js, **save** page JSON and URL mappings through the **headless APIs** (delegation + HMAC writes), and the same app **reads** that data to **render the page for real shoppers** on the matching Magento URL paths (`urlResolver` / `route` → `APPCONFIG_HEADLESS`).
-
-That workflow matters because **editors do not wait on a deploy** to open a new path: they ship a page from Next.js, persist it to Magento, and customers hit the live URL—**fast iteration** for campaigns and landing content without treating Magento as the visual CMS.
+**Version:** see [`composer.json`](composer.json) and the **module changelog** — [`CHANGELOG.md`](./CHANGELOG.md) next to this README (`app/code/IDangerous/AppConfig/`).
 
 ---
 

@@ -1,3 +1,9 @@
+### Why we built this (real-world scenario)
+
+We run **Magento as the system of record** and **Next.js as the authoring and delivery surface**. This module exists so that **Next.js can create and update storefront “pages” end-to-end**: editors design in Next.js, **save** page JSON and URL mappings through the **headless APIs** (delegation + HMAC writes), and the same app **reads** that data to **render the page for real shoppers** on the matching Magento URL paths (`urlResolver` / `route` → `APPCONFIG_HEADLESS`).
+
+That workflow matters because **editors do not wait on a deploy** to open a new path: they ship a page from Next.js, persist it to Magento, and customers hit the live URL—**fast iteration** for campaigns and landing content without treating Magento as the visual CMS.
+
 # App Config — Headless integration
 
 Public App Config values still use anonymous **`appConfig {}`** GraphQL and catalog REST. **`origin=headless`** rows are hidden there; this document covers the **headless API** that syncs those rows and maps storefront paths.
