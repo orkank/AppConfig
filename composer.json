@@ -1,8 +1,8 @@
 {
     "name": "idangerous/appconfig",
-    "description": "Dynamic App Configuration Management Module for Magento 2. Allows managing key-value pairs, groups, and exposing them via REST API.",
+    "description": "Dynamic app configuration for Magento 2: admin key-value store, REST/GraphQL, Import/Export, and optional Next.js headless sync (HMAC, delegation, URL routes).",
     "type": "magento2-module",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "license": "MIT",
     "authors": [
         {
@@ -15,6 +15,8 @@
         "app-configuration",
         "mobile-app",
         "api",
+        "graphql",
+        "headless",
         "key-value-store"
     ],
     "require": {

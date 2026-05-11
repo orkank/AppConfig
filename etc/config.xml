@@ -4,7 +4,16 @@
         <appconfig>
             <general>
                 <enabled>1</enabled>
+                <headless_writes_enabled>0</headless_writes_enabled>
             </general>
+            <headless_integration>
+                <group_code>nextjs</group_code>
+                <key_prefix>nextJS.</key_prefix>
+                <session_ttl>3600</session_ttl>
+                <hmac_clock_skew>300</hmac_clock_skew>
+                <delegation_ttl>120</delegation_ttl>
+                <delegation_post_path>appconfig/delegation</delegation_post_path>
+            </headless_integration>
         </appconfig>
     </default>
 </config>

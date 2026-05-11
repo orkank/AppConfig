@@ -1,224 +1,125 @@
-# Magento2 AppConfig
+# IDangerous AppConfig (Magento 2)
 
-**Magento2 AppConfig** is a robust Magento 2 module designed to manage dynamic configurations for mobile applications or external front-ends. It provides a flexible Key-Value store system directly within the Magento Admin Panel, allowing you to define, group, and expose configuration data (such as banners, featured products, category lists, or text settings) via a standardized REST API.
+**App Config** is a Magento 2 module that stores **structured configuration** for mobile apps, PWAs, and **headless front‑ends** (e.g. Next.js): groups, typed key-value rows, and stable **REST** / **GraphQL** read APIs. An optional **headless integration** layer adds **shared-secret HMAC**, **admin delegation → short-lived JWT**, JSON sync, **storefront URL → key** routing via `url_rewrite`, and write APIs for sync and cleanup.
 
-## Features
+**Version:** see [`composer.json`](composer.json) and the **module changelog** — [`CHANGELOG.md`](./CHANGELOG.md) next to this README (`app/code/IDangerous/AppConfig/`). This is **not** the Magento installation / repository root `CHANGELOG.md`; release notes for **IDangerous_AppConfig** live only in that file.
 
--   **Dynamic Key-Value Store**: Create and manage configuration keys without deploying code.
--   **Grouping**: Organize keys into logical groups (e.g., "Homepage", "Sidebar", "Checkout").
--   **Rich Data Types**: Support for various data types including:
-    -   Text / String
-    -   JSON Object with advanced editor:
-        -   Key-Value Mode: Simple object editor
-        -   Nested Mode: Array of objects editor for structured configurations
-        -   Raw JSON Mode: Direct JSON editing
-        -   Integrated file picker for media selection
-    -   Product Selector (Select products from the catalog)
-    -   Category Selector (Select categories from the tree)
-    -   CMS Pages Selector (Select CMS pages with optional content inclusion)
-    -   File Upload
--   **REST API**: Exposes configuration data via public endpoints for easy consumption by mobile apps (iOS/Android) or PWA.
--   **Import/Export**: Tools to migrate configuration between environments.
+### Why we built this (real-world scenario)
+
+We run **Magento as the system of record** and **Next.js as the authoring and delivery surface**. This module exists so that **Next.js can create and update storefront “pages” end-to-end**: editors design in Next.js, **save** page JSON and URL mappings through the **headless APIs** (delegation + HMAC writes), and the same app **reads** that data to **render the page for real shoppers** on the matching Magento URL paths (`urlResolver` / `route` → `APPCONFIG_HEADLESS`).
+
+That workflow matters because **editors do not wait on a deploy** to open a new path: they ship a page from Next.js, persist it to Magento, and customers hit the live URL—**fast iteration** for campaigns and landing content without treating Magento as the visual CMS.
+
+---
+
+## Table of contents
+
+- [Features at a glance](#features-at-a-glance)
+- [Requirements](#requirements)
+- [Installation & upgrades](#installation--upgrades)
+- [Admin UI](#admin-ui)
+- [REST API (public catalog)](#rest-api-public-catalog)
+- [GraphQL (`appConfig`)](#graphql-appconfig)
+- [Headless integration (Next.js, etc.)](#headless-integration-nextjs-etc)
+- [Programmatic use (PHP)](#programmatic-use-php)
+- [Changelog](#changelog)
+- [License & author](#license--author)
+
+---
+
+## Features at a glance
+
+| Area | What it does |
+|------|----------------|
+| **Admin** | Groups, key-value CRUD, rich types (text, JSON with editors, products, categories, CMS pages, files), Import/Export. |
+| **Public read API** | Anonymous `GET /V1/appconfig/config` and `GET /V1/appconfig/groups` — catalog data, versions, filters. |
+| **Storefront GraphQL** | `appConfig` query — same data as REST with key/group/version filters. |
+| **Headless** | HMAC-signed REST/GraphQL: read JSON by prefix, upsert JSON, **register/unregister** storefront paths, **list** all routes, **delete** headless keys; admin **Launch headless** delegation POST. |
+| **Routing** | `APPCONFIG_HEADLESS` on `urlResolver` / `route` with `app_config_key` → `key_name`. |
+
+Rows created via the headless API use `origin=headless` and are excluded from the anonymous `appConfig` snapshot where applicable; use the headless read endpoints instead.
+
+---
 
 ## Requirements
 
--   Magento Open Source / Adobe Commerce 2.4.x
--   PHP 7.4, 8.1, or 8.2
+- Magento Open Source or Adobe Commerce **2.4.x**
+- PHP **7.4** or **8.1+** (see `composer.json` for the exact constraint)
+- PHP extensions required by Magento + JSON
 
-## Installation
+---
 
-### 1. Manual Installation
-1.  Download the module source code.
-2.  Copy the contents to `app/code/IDangerous/AppConfig` in your Magento root directory.
-3.  Run the following commands:
+## Installation & upgrades
+
+### Install
 
 ```bash
 bin/magento module:enable IDangerous_AppConfig
 bin/magento setup:upgrade
 bin/magento setup:di:compile
-bin/magento setup:static-content:deploy
+bin/magento setup:static-content:deploy -f
 ```
 
-### 2. Composer (if available via repository)
+Composer (if you publish or mirror the package):
+
 ```bash
-composer require idangerous/appconfig
-bin/magento module:enable IDangerous_AppConfig
+composer require idangerous/appconfig:^2.0
 bin/magento setup:upgrade
 ```
 
-## Usage
+### After upgrading this module
 
-### Admin Configuration
-Navigate to **Store > App Config** in the Admin Panel.
-
-#### 1. Manage Groups
-Create groups to organize your configuration keys. For example, you might create a group named **Homepage** to hold all homepage-related settings.
-
-#### 2. Manage Key-Value Pairs
-Create new configuration entries.
--   **Key**: The unique identifier for the setting (e.g., `homepage_banner_products`).
--   **Group**: Assign to a previously created group.
--   **Type**: Select the input type.
-    -   *Text*: Simple string values.
-    -   *JSON*: Advanced JSON editor with multiple modes:
-        -   **Key-Value Mode**: Simple object format `{"key": "value"}` with visual editor
-        -   **Nested Mode**: Array of objects format `[{"key": "value"}, {...}]` for structured data
-        -   **Raw JSON Mode**: Direct JSON editing for advanced users
-        -   **File Picker**: Each value field includes a file picker icon to select files from media gallery
-    -   *Products*: Opens a product grid to select specific products. The API will return their IDs or basic data.
-    -   *Category*: Opens a category tree to select categories. Each category has an optional "Products to include" input. When set (e.g. 5), the API returns that many products from that category in the output.
-    -   **Custom product attributes**: Below Products and Categories, an input field accepts comma-separated attribute codes (e.g. `author,publisher,isbn`). When set, these custom attributes (only those that exist in Magento) are included in the product output—for both directly selected products and products pulled from categories. Useful for book metadata (author, ISBN), size charts, or any product-specific custom attributes.
-    -   *CMS Pages*: Opens a CMS pages grid to select pages. Use the "Include CMS page content in API output" (Yes/No) option:
-        -   **Yes**: API returns full page data including the HTML `content` field.
-        -   **No**: Returns only `id`, `permalink`, `title`, and `update_time` (no content).
-    -   *File*: Upload generic files or images.
-
-#### JSON Editor Features
-
-The JSON editor provides three editing modes for different use cases:
-
-1. **Key-Value Mode**: Simple object format `{"key1": "value1", "key2": "value2"}`
-   - Visual editor with key-value pair inputs
-   - Easy to add/remove pairs
-   - Each value field includes a file picker icon (📁) to select files from media gallery
-
-2. **Nested Mode**: Array of objects format `[{"key": "value"}, {"key": "value"}]`
-   - Perfect for structured configurations like banners, lists, or repeated objects
-   - Each row represents an object in the array
-   - Rows are automatically numbered (Row 1, Row 2, etc.)
-   - Each row can contain multiple key-value pairs
-   - Useful for configurations like banner lists, product groups, etc.
-
-3. **Raw JSON Mode**: Direct JSON editing
-   - For advanced users who prefer manual JSON editing
-   - Full JSON syntax support
-   - Syntax validation
-
-**File Picker Integration**: In both Key-Value and Nested modes, each value input field includes a file picker icon. Clicking the icon opens Magento's media browser, allowing you to select files. The selected file's URL is automatically inserted into the value field.
-
-**Mode Switching**: You can switch between modes at any time. The editor preserves your data and converts it to the appropriate format when switching modes.
-
-### API Reference
-
-The module exposes the following REST API endpoints (accessible anonymously):
-
-#### Get All Configurations
-Return all active key-value pairs formatted for the application.
-
--   **URL**: `/V1/appconfig/config`
--   **Method**: `GET`
--   **Parameters**:
-    -   `appVersion` (optional): App version filter (e.g., "1.0.5")
-    -   `groupCode` (optional): Filter by group code
-
-**Response Format:**
-
-```json
-{
-  "DEFAULTS": {
-    "key_name": {
-      "key": "key_name",
-      "text": "text value",
-      "file": "https://example.com/media/file.jpg",
-      "json": {...},
-      "products": [
-        {
-          "id": 343079,
-          "sku": "A.314066",
-          "name": "Product Name",
-          "image": "https://example.com/media/catalog/product/m/s/ms1234.jpg",
-          "media_gallery": [
-            {"url": "https://example.com/media/catalog/product/m/s/ms1234.jpg", "label": "Front"},
-            {"url": "https://example.com/media/catalog/product/m/s/ms1234_2.jpg", "label": "Back"}
-          ],
-          "final_price": 45.50,
-          "regular_price": 50.00,
-          "currency": "TRY",
-          "is_in_stock": true,
-          "qty": 10.0,
-          "author": "John Doe",
-          "isbn": "978-3-16-148410-0"
-        }
-      ],
-      "categories": [
-        {
-          "id": 32,
-          "name": "Category Name"
-        },
-        {
-          "id": 5,
-          "name": "Roman",
-          "products": [
-            {
-              "id": 101,
-              "sku": "BOOK-001",
-              "name": "Book Title",
-              "image": "https://example.com/media/...",
-              "final_price": 45.50,
-              "regular_price": 50.00,
-              "currency": "TRY",
-              "is_in_stock": true
-            }
-          ]
-        }
-      ],
-      "cms_pages": [
-        {
-          "id": 5,
-          "permalink": "about-us",
-          "title": "About Us",
-          "update_time": "2024-01-15 10:30:00",
-          "content": "<p>Full page HTML content when include option is enabled</p>"
-        }
-      ],
-      "version": "1.0.0"
-    }
-  },
-  "GROUPS": {
-    "group_code": {
-      "name": "Group Name",
-      "description": "Group Description",
-      "version": "1.0.0",
-      "configs": {
-        "key_name": {...}
-      }
-    }
-  }
-}
+```bash
+bin/magento setup:upgrade
+bin/magento setup:di:compile
+bin/magento cache:flush
 ```
 
-**Note:** The `products` field includes price, stock, and image information loaded from Magento catalog. The `image` field contains the main product image URL (or Magento placeholder if no image is set). The `media_gallery` field contains all product images in full/original size with URL and label. All price values are in the store's base currency. If "Custom product attributes" is configured (e.g. `author,isbn`), those attributes are added to each product object when they exist in the catalog.
+Review the module [**CHANGELOG.md**](./CHANGELOG.md) (same directory as this README) for schema or behavior changes.
 
-#### Get Groups
-Return a list of available configuration groups.
+---
 
--   **URL**: `/V1/appconfig/groups`
--   **Method**: `GET`
--   **Parameters**:
-    -   `appVersion` (optional): App version filter (e.g., "1.0.5")
+## Admin UI
 
-### GraphQL Support
+Under **Stores → App Config**:
 
-This module supports GraphQL for retrieving configurations with flexible filtering.
+| Menu | Purpose |
+|------|---------|
+| **Configuration** | Opens **Stores → Configuration → App Config** (system settings, including “Allow headless writes”). |
+| **Launch headless** | Opens the **delegation POST** handoff (no need to open Headless Integration first). Same flow as the button on **Headless Integration**. |
+| **Headless Integration** | Shared secret, app URL, key prefix, group code, delegation TTL/path, **Launch headless** (opens new tab), save credentials. |
+| **Groups** / **Key-Value Pairs** | Manage the key-value store. |
+| **Import/Export** | Migrate data between environments. |
 
-#### Query: `appConfig`
+### Key-value types (short)
 
-Retrieve configurations, optionally filtering by specific keys or group codes.
+- **Text**, **JSON** (key-value / nested array / raw modes, media picker on values).
+- **Products** / **Categories** (grids/trees; optional product limit per category; optional **custom attribute codes** appended to each product in API output).
+- **CMS pages** (optional full HTML `content` in API).
+- **File** uploads.
 
-**Arguments:**
+---
 
--   `keys` (optional): Array of Strings. Filter by configuration keys.
--   `groups` (optional): Array of Strings. Filter by group codes.
--   `app_version` (optional): String. Provide the client app version (e.g., "1.0.5") to filter out incompatible configurations based on version rules.
+## REST API (public catalog)
 
-**Example Query: Fetch specific homepage config**
+Anonymous storefront REST (`/rest/{store_code}/V1/...`):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/V1/appconfig/config` | Full or filtered config snapshot (`appVersion`, `groupCode` query params). |
+| `GET` | `/V1/appconfig/groups` | List of configuration groups. |
+
+Response shape: top-level `DEFAULTS` and `GROUPS` with nested keys; product payloads include prices, stock, main `image`, full `media_gallery`, and any configured custom attributes when present in the catalog.
+
+---
+
+## GraphQL (`appConfig`)
+
+Storefront query:
 
 ```graphql
-query {
-  appConfig(
-    keys: ["homepage_banner", "homepage_title"],
-    groups: ["homepage_main"]
-  ) {
+query ($version: String, $keys: [String], $groups: [String]) {
+  appConfig(app_version: $version, keys: $keys, groups: $groups) {
     key
     group
     type
@@ -226,229 +127,57 @@ query {
     text
     file
     json
-    products {
-      id
-      sku
-      name
-      image
-      media_gallery {
-        url
-        label
-      }
-      final_price
-      regular_price
-      currency
-      is_in_stock
-      qty
-    }
-    categories {
-      id
-      name
-    }
-    cms_pages {
-      id
-      permalink
-      title
-      update_time
-      content
-    }
+    products { id sku name image final_price regular_price currency is_in_stock qty }
+    categories { id name }
+    cms_pages { id permalink title update_time content }
   }
 }
 ```
 
-**Example Query: Fetch all configurations for an app version**
+- Only the field matching `type` is populated; others are `null`.
+- `json` is returned as a **string** — parse on the client.
 
-```graphql
-query {
-  appConfig(app_version: "2.1.0") {
-    key
-    group
-    type
-    text
-    file
-    json
-    products {
-      id
-      sku
-      name
-      image
-      media_gallery {
-        url
-        label
-      }
-      final_price
-      regular_price
-      currency
-      is_in_stock
-      qty
-    }
-    categories {
-      id
-      name
-    }
-    cms_pages {
-      id
-      permalink
-      title
-      update_time
-      content
-    }
-  }
-}
-```
+---
 
-**Example Query: Fetch JSON configuration**
+## Headless integration (Next.js, etc.)
 
-```graphql
-query {
-  appConfig(keys: ["BANNERS"]) {
-    key
-    group
-    type
-    json
-  }
-}
-```
+The headless layer is documented in **[HEADLESS.md](HEADLESS.md)** (signing, headers, flows). Summary:
 
-**Response Format:**
+| Concern | Notes |
+|---------|--------|
+| **Reads** | Shared HMAC only — no `X-AppConfig-Session`. |
+| **Writes** | HMAC + session JWT from **delegation exchange**; respects **Allow headless writes** in system config. |
+| **Launch** | **Stores → App Config → Launch headless** or **Headless Integration** — POSTs one-time `delegation_code` to your app (not in the query string). |
 
-```json
-{
-  "data": {
-    "appConfig": [
-      {
-        "key": "homepage_banner",
-        "group": "homepage_main",
-        "type": "file",
-        "version": "1.0.0",
-        "text": null,
-        "file": "https://example.com/media/appconfig/files/banner.jpg",
-        "json": null,
-        "products": null,
-        "categories": null
-      },
-      {
-        "key": "BANNERS",
-        "group": "homepage_main",
-        "type": "json",
-        "version": null,
-        "text": null,
-        "file": null,
-        "json": "[{\"QUERY\":\"Athica Yayınları\",\"TYPE\":\"PUBLISHER\",\"BANNER\":\"https://example.com/media/674x220-athica_blok_ar25.jpg\"}]",
-        "products": null,
-        "categories": null
-      },
-      {
-        "key": "WEEKLY_PROMO",
-        "group": "HOMEPAGE",
-        "type": "products",
-        "version": null,
-        "text": null,
-        "file": null,
-        "json": null,
-        "products": [
-          {
-            "id": 343079,
-            "sku": "A.314066",
-            "name": "Unutulmuş Kuşlar Göğü - 1 (Ciltli)",
-            "image": "https://example.com/media/catalog/product/m/s/ms1234.jpg",
-            "media_gallery": [
-              {"url": "https://example.com/media/catalog/product/m/s/ms1234.jpg", "label": "Kapak"},
-              {"url": "https://example.com/media/catalog/product/m/s/ms1234_2.jpg", "label": "Arka"}
-            ],
-            "final_price": 45.50,
-            "regular_price": 50.00,
-            "currency": "TRY",
-            "is_in_stock": true,
-            "qty": 10.0,
-            "author": "Yazar Adı",
-            "isbn": "978-3-16-148410-0"
-          }
-        ],
-        "categories": [
-        ],
-        "cms_pages": null
-      },
-      {
-        "key": "ABOUT_PAGES",
-        "group": "HOMEPAGE",
-        "type": "cms",
-        "version": null,
-        "text": null,
-        "file": null,
-        "json": null,
-        "products": null,
-        "categories": null,
-        "cms_pages": [
-          {
-            "id": 5,
-            "permalink": "about-us",
-            "title": "About Us",
-            "update_time": "2024-01-15 10:30:00"
-          }
-            "id": 32,
-            "name": "Bilim"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+Notable REST paths (under `/V1/appconfig/headless/` on the storefront REST base):
 
-**Note:**
-- The response includes all value fields (`text`, `file`, `json`, `products`, `categories`, `cms_pages`), but only the field matching the `type` will have a value. All other fields will be `null`.
-- The `json` field returns a JSON string that should be parsed on the client side using `JSON.parse()`.
-- The `products` field returns an array of product objects with `id`, `sku`, `name`, `image`, `media_gallery`, `final_price`, `regular_price`, `currency`, `is_in_stock`, and `qty` fields. When "Custom product attributes" is configured, those attributes (e.g. `author`, `isbn`) are also included in each product. The `image` field contains the main product image URL. The `media_gallery` field contains all product images in full size as `{url, label}` objects. Price and stock information is loaded from Magento catalog.
-- The `categories` field returns an array of category objects with `id` and `name` fields (same format as REST API).
-- The `cms_pages` field returns an array of CMS page objects. When "Include content" is enabled: `id`, `permalink`, `title`, `update_time`, and `content`. When disabled: only `id`, `permalink`, `title`, and `update_time` (no `content`).
+- `session/exchange`, `json` (GET/POST), `url-routes` (GET), `register-url`, `unregister-url`, `delete-json-keys`
 
-You can access the configuration data programmatically within Magento (e.g., in Blocks, ViewModels, or other Models) by injecting the `IDangerous\AppConfig\Api\AppConfigInterface`.
+GraphQL mutations/queries mirror these (see `etc/schema.graphqls`). A **[Postman](postman.json)** collection is included for signed requests.
 
-#### 1. Retrieve a Single Value
+---
 
-Ideal for fetching a specific configuration setting.
+## Programmatic use (PHP)
+
+Inject **`IDangerous\AppConfig\Api\AppConfigInterface`**:
 
 ```php
-<?php
-namespace Vendor\Module\ViewModel;
+// Single value
+$text = $this->appConfig->getValue('my_key', 'group_code', $appVersion);
 
-use IDangerous\AppConfig\Api\AppConfigInterface;
-use Magento\Framework\View\Element\Block\ArgumentInterface;
-
-class MyViewModel implements ArgumentInterface
-{
-    private $appConfig;
-
-    public function __construct(AppConfigInterface $appConfig)
-    {
-        $this->appConfig = $appConfig;
-    }
-
-    public function getBannerUrl()
-    {
-        // Get value by key
-        $url = $this->appConfig->getValue('homepage_banner');
-
-        // You can also specify group or app version for compatibility checks
-        // $url = $this->appConfig->getValue('homepage_banner', 'homepage', '1.0.5');
-
-        return $url;
-    }
-}
+// Full structure for a version
+$config = $this->appConfig->getConfig($appVersion); // ['DEFAULTS' => ..., 'GROUPS' => ...]
 ```
 
-#### 2. Retrieve All Configurations
+---
 
-Useful if you need to build a complete configuration object.
+## Changelog
 
-```php
-public function getAllConfigs()
-{
-    // Returns array ['DEFAULTS' => [...], 'GROUPS' => [...]]
-    return $this->appConfig->getConfig('1.2.0');
-}
-```
+**IDangerous_AppConfig** maintains its own history in **[`app/code/IDangerous/AppConfig/CHANGELOG.md`](./CHANGELOG.md)** (relative to the Magento root — open the copy that sits **next to this README** in the module folder). Do not use the unrelated root or vendor changelog files.
+
+Recent example: **2.0.0** — headless list/delete/unregister APIs, admin **Launch headless** menu shortcut, documentation refresh.
+
+---
 
 ## License
 

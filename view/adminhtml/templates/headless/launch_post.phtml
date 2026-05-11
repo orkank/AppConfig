@@ -1,0 +1,25 @@
+<?php
+/** @var $block \IDangerous\AppConfig\Block\Adminhtml\Headless\LaunchPost */
+$codeEsc = $block->escapeHtmlAttr($block->getDelegationCode());
+$postUrlEsc = $block->escapeUrl($block->getPostUrl());
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title><?= $block->escapeHtml(__('Redirecting')) ?></title>
+</head>
+<body>
+<p><?= $block->escapeHtml(__('Submitting delegation to headless app (POST body — not logged in typical access logs)...')) ?></p>
+<form id="idh-appconfig-delegation-post" action="<?= /* @noEscape */ $postUrlEsc ?>" method="post" target="_blank">
+    <input type="hidden" name="delegation_code" value="<?= /* @noEscape */ $codeEsc ?>"/>
+    <noscript>
+        <button type="submit"><?= $block->escapeHtml(__('Continue')) ?></button>
+    </noscript>
+</form>
+<script>
+    document.getElementById('idh-appconfig-delegation-post').submit();
+</script>
+</body>
+</html>

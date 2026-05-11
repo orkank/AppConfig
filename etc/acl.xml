@@ -5,15 +5,17 @@
         <resources>
             <resource id="Magento_Backend::admin">
                 <resource id="Magento_Backend::stores">
-                    <!-- Menu -->
                     <resource id="IDangerous_AppConfig::appconfig" title="App Config" translate="title" sortOrder="200">
+                        <resource id="IDangerous_AppConfig::headless_integration"
+                                  title="Headless Integration"
+                                  translate="title"
+                                  sortOrder="15"/>
                         <resource id="IDangerous_AppConfig::groups" title="Groups" translate="title" sortOrder="10"/>
                         <resource id="IDangerous_AppConfig::keyvalues" title="Key-Value Pairs" translate="title" sortOrder="20"/>
                         <resource id="IDangerous_AppConfig::export" title="Export" translate="title" sortOrder="30"/>
-                        <resource id="IDangerous_AppConfig::import" title="Import" translate="title" sortOrder="40"/>
+                        <resource id="IDangerous_AppConfig::import" title="Import/Export" translate="title" sortOrder="40"/>
                     </resource>
 
-                    <!-- Settings -->
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
                             <resource id="IDangerous_AppConfig::config" title="App Config Section" translate="title" sortOrder="200"/>
@@ -24,5 +26,3 @@
         </resources>
     </acl>
 </config>
-
-

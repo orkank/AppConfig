@@ -111,6 +111,14 @@
                 <label translate="true">Key</label>
             </settings>
         </column>
+        <column name="origin" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <options class="IDangerous\AppConfig\Model\Source\KvOrigin"/>
+                <filter>select</filter>
+                <dataType>select</dataType>
+                <label translate="true">Source</label>
+            </settings>
+        </column>
         <column name="name">
             <settings>
                 <filter>text</filter>

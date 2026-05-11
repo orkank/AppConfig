@@ -1,0 +1,428 @@
+{
+  "info": {
+    "_postman_id": "7bfa1b5d-1b39-42e0-a44f-94b0bec91e6a",
+    "name": "IDangerous AppConfig (Headless + GraphQL)",
+    "description": "Headless endpoints require **HMAC** per [HEADLESS.md](HEADLESS.md). Variables: `base_url`, `shared_secret`, `graphql_path`, `store_view_code`, `delegation_code`, `headless_sample_key`.\n\n**Reads**: HMAC only — omit `X-AppConfig-Session`.\n\n**Writes**: HMAC + `X-AppConfig-Session` (run **Exchange session** request first).\n\n**exchange**: POST body `{\"delegationCode\":\"…\"}` — no session header.\n\nIf signature fails due to subdirectory installs, set `appconfig_pathinfo_override` on the collection to the canonical pathInfo (e.g. `/store/de/graphql`).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 — Headless (HMAC)",
+      "description": "Pre-request derives the exact POST body hash Magento sees. Set collection variables shared_secret (and base_url).",
+      "item": [
+        {
+          "name": "Exchange session (delegation → JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var d = j && j.data && j.data.appConfigHeadlessExchangeSession;",
+                  "  if (d && d.session_token) {",
+                  "    pm.collectionVariables.set('appconfig_session', d.session_token);",
+                  "    console.log('Saved appconfig_session (' + String(d.session_token).length + ' chars)');",
+                  "    pm.test('Exchange returned session_token', () => pm.expect(d.session_token).to.be.ok);",
+                  "  } else {",
+                  "    pm.test('GraphQL errors', () => pm.expect(j.errors === undefined || j.errors.length === 0).to.be.true);",
+                  "  }",
+                  "} catch (e) { console.warn(e.message); }",
+                  ""
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation Exchange($delegationCode: String!) { appConfigHeadlessExchangeSession(delegationCode: $delegationCode) { session_token expires_at expires_in user_id user_type } }\",\"variables\":{\"delegationCode\":\"{{delegation_code}}\"}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "Consumption of one-time delegation code minted via Admin Launch. No X-AppConfig-Session. Run tests to auto-save {{appconfig_session}}."
+          }
+        },
+        {
+          "name": "List registered URL routes (no session)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { appConfigHeadlessUrlRoutes { items { route_id request_path appconfig_key store_id } } }\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "Same rows as REST GET …/headless/url-routes. HMAC-only (empty raw body → SHA256(\"\")). Optional variable: store_id filter — use query HeadlessUrlRoutes($sid: Int){ appConfigHeadlessUrlRoutes(store_id: $sid){...} } with variables."
+          }
+        },
+        {
+          "name": "Headless JSON read (no session)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query Keys($keys: [String!]!) { appConfigHeadlessJson(keys: $keys) { items { key json } } }\",\"variables\":{\"keys\":[\"{{headless_sample_key}}\"]}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "HMAC-only. Headers must NOT include X-AppConfig-Session. Adjust {{headless_sample_key}} to match your configured key prefix."
+          }
+        },
+        {
+          "name": "Save headless JSON (session + HMAC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation Save($items: [AppConfigHeadlessJsonUpsertInput!]!) { appConfigHeadlessSaveJson(items: $items) { saved } }\",\"variables\":{\"items\":[{\"key\":\"{{headless_sample_key}}\",\"json\":\"{}\"}]}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "Requires Allow Headless Writes + valid admin session JWT. Run Exchange first."
+          }
+        },
+        {
+          "name": "Register storefront path (session + HMAC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation Register($request_path: String!, $appconfig_key: String!) { appConfigHeadlessRegisterUrl(request_path: $request_path, appconfig_key: $appconfig_key) { route_id request_path appconfig_key store_ids } }\",\"variables\":{\"request_path\":\"{{register_request_path}}\",\"appconfig_key\":\"{{headless_sample_key}}\"}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "omit store_ids in variables or use integer array via register_store_ids (e.g. 1)."
+          }
+        },
+        {
+          "name": "Unregister storefront path (session + HMAC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation U($routeId: Int!) { appConfigHeadlessUnregisterUrl(route_id: $routeId) { deleted_rewrites route_removed } }\",\"variables\":{\"routeId\":{{headless_route_id}}}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "Set headless_route_id from url-routes list. Add store_ids in query + variables to remove selected stores only."
+          }
+        },
+        {
+          "name": "Delete headless JSON keys (session + HMAC)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation D($keys: [String!]!) { appConfigHeadlessDeleteJsonKeys(keys: $keys) { deleted } }\",\"variables\":{\"keys\":[\"{{headless_sample_key}}\"]}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "Deletes keyvalue rows with origin=headless only; key must match prefix."
+          }
+        },
+        {
+          "name": "REST — POST exchange",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"delegationCode\":\"{{delegation_code}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{rest_endpoint_prefix}}/appconfig/headless/session/exchange",
+            "description": "pathInfo becomes /rest/.../session/exchange for signature canonical string."
+          }
+        },
+        {
+          "name": "REST — GET json (keys query)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" }
+            ],
+            "url": "{{base_url}}{{rest_endpoint_prefix}}/appconfig/headless/json?keys%5B0%5D={{headless_sample_key}}",
+            "description": "HMAC-only, empty body ⇒ SHA256(\"\") for signature. Encode keys[]= as keys%5B0%5D= if needed."
+          }
+        },
+        {
+          "name": "REST — GET url-routes (all paths)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" }
+            ],
+            "url": "{{base_url}}{{rest_endpoint_prefix}}/appconfig/headless/url-routes",
+            "description": "Lists every register-url mapping: request_path, appconfig_key, store_id, route_id. HMAC-only. Optional: append ?store_id=1 to filter one store view."
+          }
+        },
+        {
+          "name": "REST — POST upsert JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"key\":\"{{headless_sample_key}}\",\"json\":{}}]}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{rest_endpoint_prefix}}/appconfig/headless/json",
+            "description": "Session required."
+          }
+        },
+        {
+          "name": "REST — POST register-url",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"request_path\":\"{{register_request_path}}\",\"appconfig_key\":\"{{headless_sample_key}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{rest_endpoint_prefix}}/appconfig/headless/register-url",
+            "description": "Requires Allow Headless Writes + session JWT from Exchange."
+          }
+        },
+        {
+          "name": "REST — POST unregister-url",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"route_id\":{{headless_route_id}}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{rest_endpoint_prefix}}/appconfig/headless/unregister-url",
+            "description": "Full route removal. Optional: {\"route_id\":1,\"store_ids\":[1]} for partial."
+          }
+        },
+        {
+          "name": "REST — POST delete-json-keys",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-AppConfig-Timestamp", "value": "{{appconfig_timestamp}}" },
+              { "key": "X-AppConfig-Signature", "value": "{{appconfig_signature}}" },
+              { "key": "X-AppConfig-Session", "value": "{{appconfig_session}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"keys\":[\"{{headless_sample_key}}\"]}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{rest_endpoint_prefix}}/appconfig/headless/delete-json-keys",
+            "description": "Permanently removes headless-origin key rows (prefix must match)."
+          }
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const CryptoJS = require('crypto-js');",
+              "function expandTpl(str) {",
+              "  if (!str || typeof str !== 'string') return '';",
+              "  return pm.variables.replaceIn(str);",
+              "}",
+              "const method = (pm.request.method || 'POST').toUpperCase();",
+              "let pathInfo = expandTpl(pm.collectionVariables.get('appconfig_pathinfo_override') || pm.environment.get('appconfig_pathinfo_override') || '');",
+              "if (!pathInfo && pm.request.url && pm.request.url.path && pm.request.url.path.length)",
+              "  pathInfo = '/' + pm.request.url.path.join('/');",
+              "if (!pathInfo) pathInfo = expandTpl(pm.collectionVariables.get('graphql_path') || '/graphql');",
+              "const timestamp = Math.floor(Date.now() / 1000).toString();",
+              "pm.collectionVariables.set('appconfig_timestamp', timestamp);",
+              "const secret = pm.collectionVariables.get('shared_secret') || pm.environment.get('shared_secret');",
+              "if (!secret) { console.warn('Set shared_secret on collection or environment'); return; }",
+              "let rawBody = '';",
+              "if (method !== 'GET' && method !== 'HEAD' && pm.request.body && pm.request.body.mode === 'raw') rawBody = expandTpl(pm.request.body.raw || '');",
+              "const bodyHash = CryptoJS.SHA256(rawBody).toString(CryptoJS.enc.Hex);",
+              "const canonical = method + '\\n' + pathInfo + '\\n' + timestamp + '\\n' + bodyHash;",
+              "pm.collectionVariables.set('appconfig_signature', CryptoJS.HmacSHA256(canonical, secret).toString(CryptoJS.enc.Hex));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 — Store GraphQL (no AppConfig signing)",
+      "description": "Standard Magento storefront GraphQL — do not send X-AppConfig-* headers.",
+      "item": [
+        {
+          "name": "urlResolver — AppConfig HEADLESS mapping",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query U($url: String!) { urlResolver(url: $url) { relative_url type id app_config_key } }\",\"variables\":{\"url\":\"{{resolver_sample_url}}\"}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}"
+          }
+        },
+        {
+          "name": "route — storefront route",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query R($url: String!) { route(url: $url) { relative_url redirect_code ... on RoutableUrl { type app_config_key } } }\",\"variables\":{\"url\":\"{{resolver_sample_url}}\"}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}"
+          }
+        },
+        {
+          "name": "Public appConfig snapshot (non-headless keys)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { appConfig { key group type text json file version products { sku name } categories { id name } cms_pages { id title permalink } } }\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}{{graphql_path}}",
+            "description": "Anonymous appConfig excludes origin=headless rows."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://your-store.example.com"
+    },
+    {
+      "key": "graphql_path",
+      "value": "/graphql"
+    },
+    {
+      "key": "store_view_code",
+      "value": "default"
+    },
+    {
+      "key": "rest_endpoint_prefix",
+      "value": "/rest/{{store_view_code}}/V1"
+    },
+    {
+      "key": "headless_sample_key",
+      "value": "nextJS.demo"
+    },
+    {
+      "key": "delegation_code",
+      "value": ""
+    },
+    {
+      "key": "appconfig_timestamp",
+      "value": ""
+    },
+    {
+      "key": "appconfig_signature",
+      "value": ""
+    },
+    {
+      "key": "appconfig_session",
+      "value": ""
+    },
+    {
+      "key": "shared_secret",
+      "value": ""
+    },
+    {
+      "key": "resolver_sample_url",
+      "value": "promo/demo-path"
+    },
+    {
+      "key": "headless_route_id",
+      "value": "0",
+      "description": "route_id from url-routes list or register response; used for unregister-url"
+    },
+    {
+      "key": "register_request_path",
+      "value": "promo/demo-path"
+    },
+    {
+      "key": "appconfig_pathinfo_override",
+      "value": "",
+      "description": "Leave empty normally. Set to canonical pathInfo if Postman parses URL wrong (e.g. subdirectory storefront)."
+    }
+  ]
+}

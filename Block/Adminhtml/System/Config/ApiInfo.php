@@ -77,9 +77,24 @@ class ApiInfo extends Field
         $html .= '</div>';
 
         $html .= '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">';
-        $html .= '<h4 style="margin-top: 0;">Authentication</h4>';
+        $html .= '<h4 style="margin-top: 0;">Authentication — public catalog endpoints</h4>';
         $html .= '<div style="color: #666; font-size: 12px;">';
-        $html .= 'These endpoints use anonymous access. For production, consider adding authentication.';
+        $html .= '<code>/config</code> and <code>/groups</code> remain anonymous. They never return Key-Value rows created by the headless API.';
+        $html .= '</div>';
+        $html .= '</div>';
+
+        $html .= '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">';
+        $html .= '<h4 style="margin-top: 0;">Headless JSON API (HMAC; session only for writes)</h4>';
+        $html .= '<div style="color: #666; font-size: 12px;">';
+        $html .= 'Configure URL, shared HMAC secret, group/prefix/TTL/skew under <strong>Stores &gt; App Config &gt; Headless Integration</strong>.<br/>';
+        $html .= 'Every call needs <code>X-AppConfig-Timestamp</code> and <code>X-AppConfig-Signature</code> (= HMAC-SHA256(secret, METHOD + "\\n" + PATH + "\\n" + TS + "\\n" + SHA256(raw body))). Writes also need <code>X-AppConfig-Session</code> (JWT from admin delegation exchange). Reads do <em>not</em> use session — secret + HMAC only.<br/>';
+        $html .= 'If the shared secret is not saved, these routes return 404 and do not run.<br/><br/>';
+        $html .= '<em>Note:</em> when Magento normalizes POST JSON into arrays, nested keys are recursively sorted prior to hashing so clients can reconstruct the canonical JSON.<br/><br/>';
+        $html .= '<strong>POST</strong> <code>' . $apiBaseUrl . '/headless/session/exchange</code> — JSON <code>{"delegationCode":"…"}</code> only (one-time Admin Launch → Next) — HMAC, no <code>X-AppConfig-Session</code>. Returns write session JWT tied to that admin.<br/>';
+        $html .= '<strong>GET</strong> <code>' . $apiBaseUrl . '/headless/json?keys[]=key1&amp;keys[]=key2</code> — HMAC only (no session; empty body ⇒ hash of empty string)<br/>';
+        $html .= '<strong>POST</strong> <code>' . $apiBaseUrl . '/headless/json</code> — JSON upsert — HMAC + session JWT + “Allow Headless Writes”.<br/>';
+        $html .= '<strong>POST</strong> <code>' . $apiBaseUrl . '/headless/register-url</code> — HMAC + session + writes; persisted <code>url_rewrite</code> rows surface in GraphQL <code>urlResolver</code> / <code>route</code> as <code>APPCONFIG_HEADLESS</code> — see <code>HEADLESS.md</code>.<br/>';
+        $html .= '<strong>GraphQL</strong> (storefront <code>/graphql</code>): reading <code>appConfigHeadlessJson</code> is HMAC-only; exchange + write mutations need session after delegation — same <code>PATH</code> rule as REST (storefront <code>pathInfo</code>, not necessarily <code>/rest/.../V1/...</code>).';
         $html .= '</div>';
         $html .= '</div>';
 

@@ -6,6 +6,7 @@ namespace IDangerous\AppConfig\Model\Resolver;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use IDangerous\AppConfig\Model\Headless\Origin as HeadlessOrigin;
 use IDangerous\AppConfig\Model\ResourceModel\KeyValue\CollectionFactory as KeyValueCollectionFactory;
 use IDangerous\AppConfig\Model\ResourceModel\Group\CollectionFactory as GroupCollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
@@ -149,6 +150,7 @@ class AppConfigResolver implements ResolverInterface
         $collection = $this->keyValueCollectionFactory->create();
         $collection->joinGroup();
         $collection->addFieldToFilter('main_table.is_active', 1);
+        $collection->addFieldToFilter('main_table.origin', ['nin' => [HeadlessOrigin::HEADLESS]]);
 
         // Filter by keys if provided
         if (!empty($keys)) {

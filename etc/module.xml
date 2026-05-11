@@ -8,6 +8,9 @@
             <module name="Magento_Store"/>
             <module name="Magento_Api"/>
             <module name="Magento_Cms"/>
+            <module name="Magento_UrlRewrite"/>
+            <module name="Magento_UrlRewriteGraphQl"/>
+            <module name="Magento_GraphQl"/>
         </sequence>
     </module>
 </config>

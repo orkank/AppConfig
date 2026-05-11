@@ -26,6 +26,12 @@
                     <frontend_model>IDangerous\AppConfig\Block\Adminhtml\System\Config\ApiInfo</frontend_model>
                     <comment>API endpoints and usage information</comment>
                 </field>
+
+                <field id="headless_writes_enabled" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allow Headless API Writes</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>If No, authenticated headless PUT/POST writes are rejected. Configure credentials under Stores &gt; App Config &gt; Headless Integration.</comment>
+                </field>
             </group>
         </section>
     </system>

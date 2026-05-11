@@ -3,6 +3,8 @@
     <update handle="styles"/>
     <body>
         <referenceContainer name="content">
+            <block class="IDangerous\AppConfig\Block\Adminhtml\KeyValue\Listing\OriginSwitcher" name="appconfig.keyvalue.origin.switcher"
+                   template="IDangerous_AppConfig::keyvalue/listing_origin_switcher.phtml" before="appconfig_keyvalue_listing"/>
             <uiComponent name="appconfig_keyvalue_listing"/>
         </referenceContainer>
     </body>

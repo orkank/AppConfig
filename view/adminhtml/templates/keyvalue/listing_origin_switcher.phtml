@@ -1,0 +1,21 @@
+<?php
+/** @var \IDangerous\AppConfig\Block\Adminhtml\KeyValue\Listing\OriginSwitcher $block */
+$urls = $block->getUrls();
+$active = $block->getActiveScope();
+$labels = [
+    \IDangerous\AppConfig\Model\ListOriginScope::ADMIN_ONLY => (string)__('Admin entries only'),
+    \IDangerous\AppConfig\Model\ListOriginScope::HEADLESS_ONLY => (string)__('Headless/API'),
+    \IDangerous\AppConfig\Model\ListOriginScope::ALL => (string)__('All'),
+];
+?>
+<div class="message-system-compact-head" style="margin-bottom:15px;background:#fafafa;border:1px solid #dcdcdc;padding:12px;"
+     data-role="appconfig-origin-toolbar">
+    <strong><?= $block->escapeHtml(__('Listing filter — record source')) ?>:</strong>
+    <?php foreach ($labels as $scope => $label) : ?>
+        <?php $isActive = $scope === $active; ?>
+        <a href="<?= $block->escapeUrl($urls[$scope] ?? '#') ?>" class="<?= $isActive ? 'action-default' : 'action-secondary' ?>">
+        <?= $block->escapeHtml($label) ?><?php if ($isActive) : ?> <?= $block->escapeHtml(__('(active)')) ?><?php endif; ?>
+        </a>
+        &nbsp;&nbsp;
+    <?php endforeach; ?>
+</div>

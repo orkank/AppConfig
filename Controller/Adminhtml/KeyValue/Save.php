@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace IDangerous\AppConfig\Controller\Adminhtml\KeyValue;
 
+use IDangerous\AppConfig\Model\Headless\Origin;
 use IDangerous\AppConfig\Model\KeyValueFactory;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
@@ -271,6 +272,9 @@ class Save extends Action
             } elseif (!empty($data['text_value'])) {
                 $data['value_type'] = 'text';
             }
+
+            // Admin saves always stamp origin as admin (ownership).
+            $data['origin'] = Origin::ADMIN;
 
             // Final safety check: if file_path is explicitly empty string, ensure it's cleared
             // This MUST be the last check before setting data to model

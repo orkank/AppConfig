@@ -1,0 +1,117 @@
+<?php /** @var $block \IDangerous\AppConfig\Block\Adminhtml\Headless\Settings */ ?>
+<form method="post" action="<?= $block->escapeUrl($block->getFormActionUrl()) ?>" id="headless-integration-form" autocomplete="off">
+    <input name="form_key" type="hidden" value="<?= $block->escapeHtmlAttr($block->getFormKey()) ?>"/>
+
+    <fieldset class="fieldset admin__fieldset">
+        <legend class="legend admin__legend"><span><?= $block->escapeHtml(__('Headless credentials')) ?></span></legend>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-app-url"><span><?= $block->escapeHtml(__('Headless app URL')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-app-url" name="app_url" type="url" value="<?= $block->escapeHtmlAttr($block->getAppUrlStored()) ?>" class="admin__control-text" style="width:40rem;"
+                       autocomplete="off"/>
+                <div class="admin__field-note">
+                    <?= $block->escapeHtml(
+                        __(
+                            'Base URL of the Next.js storefront (no trailing slash). Admin “Launch” POSTs a one-time delegation code to {base}/{delegation path}; it is not put in the query string.'
+                        )
+                    ) ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-shared-secret"><span><?= $block->escapeHtml(__('Shared secret (HMAC)')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-shared-secret" name="shared_secret" type="password" class="admin__control-text" style="width:40rem;"
+                       autocomplete="new-password"
+                       value=""
+                       placeholder="<?= $block->isSecretConfigured()
+                           ? $block->escapeHtmlAttr(__('Leave blank to keep current secret'))
+                           : $block->escapeHtmlAttr(__('Required for headless API')) ?>"/>
+                <?php if ($block->isSecretConfigured()) : ?>
+                    <div class="admin__field-note"><?= $block->escapeHtml(__('A secret is already stored. Submit a non-empty field to rotate it.')) ?></div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-group-code"><span><?= $block->escapeHtml(__('Dedicated group code')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-group-code" name="group_code" type="text" value="<?= $block->escapeHtmlAttr($block->getGroupCodeStored()) ?>" class="admin__control-text" autocomplete="off"/>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-key-prefix"><span><?= $block->escapeHtml(__('Key prefix')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-key-prefix" name="key_prefix" type="text" value="<?= $block->escapeHtmlAttr($block->getKeyPrefixStored()) ?>" class="admin__control-text" autocomplete="off"/>
+                <div class="admin__field-note"><?= $block->escapeHtml(__('Headless REST/GraphQL endpoints only accept keys that start with this prefix.')) ?></div>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-session-ttl"><span><?= $block->escapeHtml(__('Session TTL (seconds)')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-session-ttl" name="session_ttl" type="number" min="60" step="60" value="<?= (int)$block->getSessionTtlStored() ?>" class="admin__control-text" autocomplete="off"/>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-skew"><span><?= $block->escapeHtml(__('HMAC clock skew (seconds)')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-skew" name="hmac_clock_skew" type="number" min="60" step="60" value="<?= (int)$block->getHmacSkewStored() ?>" class="admin__control-text" autocomplete="off"/>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-delegation-ttl"><span><?= $block->escapeHtml(__('Admin delegation TTL (seconds)')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-delegation-ttl" name="delegation_ttl" type="number" min="30" max="600" step="1" value="<?= (int) $block->getDelegationTtlStored() ?>" class="admin__control-text" autocomplete="off"/>
+                <div class="admin__field-note"><?= $block->escapeHtml(__('How long the one-time POST code remains valid after you click Launch (30–600).')) ?></div>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label" for="headless-delegation-path"><span><?= $block->escapeHtml(__('Delegation POST path')) ?></span></label>
+            <div class="admin__field-control">
+                <input id="headless-delegation-path" name="delegation_post_path" type="text" value="<?= $block->escapeHtmlAttr($block->getDelegationPostPathStored()) ?>" class="admin__control-text" style="width:30rem;" autocomplete="off"/>
+                <div class="admin__field-note"><?= $block->escapeHtml(__('Relative path on the headless origin that accepts POST field delegation_code (e.g. appconfig/delegation). Your Next.js route must forward to Magento exchange.')) ?></div>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label"><span><?= $block->escapeHtml(__('Admin → headless (POST redirect)')) ?></span></label>
+            <div class="admin__field-control">
+                <?php if ($block->getHeadlessAppPreviewUrl() !== null): ?>
+                    <a class="action-primary" href="<?= $block->escapeUrl($block->getDelegationLaunchUrl()) ?>" target="_blank" rel="noopener">
+                        <?= $block->escapeHtml(__('Launch headless')) ?></a>
+                    <div class="admin__field-note">
+                        <?= $block->escapeHtml(__('POST delegation opens in a new tab (also available from Stores → App Config → Launch headless). Code is not logged as a query string.')) ?>
+                    </div>
+                    <p style="margin-top:.75rem;">
+                        <a class="action-secondary" href="<?= $block->escapeUrl($block->getHeadlessAppPreviewUrl()) ?>" target="_blank" rel="noopener">
+                            <?= $block->escapeHtml(__('Open storefront base URL only')) ?></a>
+                    </p>
+                <?php else: ?>
+                    <span class="message message-notice"><?= $block->escapeHtml(__('Set Headless app URL before using Launch.')) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="admin__field field">
+            <label class="admin__field-label"><span><?= $block->escapeHtml(__('Documentation')) ?></span></label>
+            <div class="admin__field-control">
+                <p><?= $block->escapeHtml(__('Reads: Next authenticates with shared HMAC secret only (no session). Writes: Admin Launch posts delegation_code; Next exchanges for session JWT')) ?>
+                    <code><?= $block->escapeHtml('{"delegationCode":"…"}') ?></code>
+                    <?= $block->escapeHtml(__('then uses session token + HMAC for upserts and register-url. Single-use codes.')) ?></p>
+            </div>
+        </div>
+    </fieldset>
+
+    <div class="actions-toolbar">
+        <div class="primary">
+            <button type="submit" class="action-primary"><?= $block->escapeHtml(__('Save credentials')) ?></button>
+        </div>
+    </div>
+</form>

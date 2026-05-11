@@ -1,9 +1,17 @@
-type Query {
-    appConfig (
-        keys: [String] @doc(description: "Filter by specific configuration keys"),
-        groups: [String] @doc(description: "Filter by specific configuration groups"),
-        app_version: String @doc(description: "Client App Version for compatibility check (e.g. 1.0.0)")
-    ): [AppConfigKeyValue] @resolver(class: "IDangerous\\AppConfig\\Model\\Resolver\\AppConfigResolver") @doc(description: "Retrieve app configuration values")
+extend enum UrlRewriteEntityTypeEnum {
+    APPCONFIG_HEADLESS
+}
+
+extend type EntityUrl {
+    app_config_key: String
+        @doc(description: "App Config key_name when type is APPCONFIG_HEADLESS (headless URL mapping).")
+        @resolver(class: "IDangerous\\AppConfig\\Model\\Resolver\\EntityUrlAppConfigKey")
+}
+
+extend type RoutableUrl {
+    app_config_key: String
+        @doc(description: "App Config key_name when type is APPCONFIG_HEADLESS (route query).")
+        @resolver(class: "IDangerous\\AppConfig\\Model\\Resolver\\RoutableUrlAppConfigKey")
 }
 
 type AppConfigKeyValue {
@@ -51,4 +59,114 @@ type AppConfigCategory {
     name: String @doc(description: "Category Name")
     url_key: String @doc(description: "Category URL key (slug)")
     products: [AppConfigProduct] @doc(description: "Products from category - when product_limit is set in admin")
+}
+
+type AppConfigHeadlessExchangeSessionOutput {
+    session_token: String! @doc(description: "Short-lived session JWT; send as X-AppConfig-Session after exchange.")
+    expires_at: String! @doc(description: "RFC3339 UTC expiry time")
+    expires_in: Int! @doc(description: "Seconds until expiry")
+    user_id: Int! @doc(description: "Delegating Magento admin user id; same JWT claim as sub")
+    user_type: Int! @doc(description: "Always admin user-context constant; same JWT claim as utt")
+}
+
+type AppConfigHeadlessJsonPair {
+    key: String!
+    json: String @doc(description: "JSON document string for this key, or null if no headless row exists")
+}
+
+type AppConfigHeadlessJsonQueryOutput {
+    items: [AppConfigHeadlessJsonPair!]! @doc(description: "One entry per requested key, in request order")
+}
+
+type AppConfigHeadlessSaveJsonOutput {
+    saved: Int! @doc(description: "Number of rows upserted")
+}
+
+type AppConfigHeadlessUnregisterUrlOutput {
+    deleted_rewrites: Int! @doc(description: "Number of url_rewrite rows removed")
+    route_removed: Boolean! @doc(description: "True when the headless_route row was deleted (no mappings left)")
+}
+
+type AppConfigHeadlessDeleteJsonKeysOutput {
+    deleted: Int! @doc(description: "Number of keyvalue rows deleted (headless origin only)")
+}
+
+type AppConfigHeadlessRegisterUrlOutput {
+    route_id: Int!
+    request_path: String!
+    appconfig_key: String!
+    store_ids: [Int]! @doc(description: "Store view IDs the rewrite was applied to")
+}
+
+type AppConfigHeadlessUrlRouteRow {
+    route_id: Int!
+    request_path: String! @doc(description: "Storefront path registered via register-url (no leading slash)")
+    appconfig_key: String! @doc(description: "Target key_name in keyvalue")
+    store_id: Int! @doc(description: "Store view this rewrite row belongs to")
+}
+
+type AppConfigHeadlessUrlRoutesOutput {
+    items: [AppConfigHeadlessUrlRouteRow!]! @doc(description: "All url_rewrite rows for entity_type APPCONFIG_HEADLESS (one row per path per store)")
+}
+
+input AppConfigHeadlessJsonUpsertInput {
+    key: String!
+    json: String! @doc(description: "Raw JSON string for this key_name")
+}
+
+extend type Query {
+    appConfig (
+        keys: [String] @doc(description: "Filter by specific configuration keys"),
+        groups: [String] @doc(description: "Filter by specific configuration groups"),
+        app_version: String @doc(description: "Client App Version for compatibility check (e.g. 1.0.0)")
+    ): [AppConfigKeyValue]
+        @resolver(class: "IDangerous\\AppConfig\\Model\\Resolver\\AppConfigResolver")
+        @doc(description: "Retrieve app configuration values")
+
+    appConfigHeadlessJson(
+        keys: [String!]! @doc(description: "key_name values (must match configured headless prefix)")
+    ): AppConfigHeadlessJsonQueryOutput
+        @resolver(class: "IDangerous\\AppConfig\\Model\\GraphQl\\Headless\\JsonFetch")
+        @doc(description: "Headless JSON read: shared-secret HMAC only (X-AppConfig-Timestamp, X-AppConfig-Signature). Do not send X-AppConfig-Session. Same as REST GET …/headless/json.")
+
+    appConfigHeadlessUrlRoutes(
+        store_id: Int @doc(description: "Optional: limit to this store view id (omit for all stores)")
+    ): AppConfigHeadlessUrlRoutesOutput
+        @resolver(class: "IDangerous\\AppConfig\\Model\\GraphQl\\Headless\\ListRegisteredUrlRoutes")
+        @doc(description: "List every register-url / url_rewrite mapping: path, key_name, store. HMAC only (no session). Same as REST GET …/headless/url-routes.")
+}
+
+extend type Mutation {
+    appConfigHeadlessExchangeSession(
+        delegationCode: String! @doc(description: "Single-use admin code from Launch POST redirect (consumed on success)")
+    ): AppConfigHeadlessExchangeSessionOutput
+        @resolver(class: "IDangerous\\AppConfig\\Model\\GraphQl\\Headless\\ExchangeSession")
+        @doc(description: "Exchange delegation for write session JWT. HMAC only (no X-AppConfig-Session). Delegation yields admin-bound session_token for mutations.")
+
+    appConfigHeadlessSaveJson(
+        items: [AppConfigHeadlessJsonUpsertInput!]! @doc(description: "Upsert list; requires allow-writes + session")
+    ): AppConfigHeadlessSaveJsonOutput
+        @resolver(class: "IDangerous\\AppConfig\\Model\\GraphQl\\Headless\\SaveJsonItems")
+        @doc(description: "Same as POST /V1/appconfig/headless/json body items[]. HMAC + session.")
+
+    appConfigHeadlessRegisterUrl(
+        request_path: String! @doc(description: "Storefront path without leading slash")
+        appconfig_key: String! @doc(description: "Target key_name in keyvalue")
+        store_ids: [Int] @doc(description: "Optional store view IDs; omit for all storefront views")
+    ): AppConfigHeadlessRegisterUrlOutput
+        @resolver(class: "IDangerous\\AppConfig\\Model\\GraphQl\\Headless\\RegisterHeadlessUrl")
+        @doc(description: "Same as POST /V1/appconfig/headless/register-url. HMAC + session + writes enabled.")
+
+    appConfigHeadlessUnregisterUrl(
+        route_id: Int! @doc(description: "Logical headless route id (from list or register response)")
+        store_ids: [Int] @doc(description: "Optional: remove only these store rewrites; omit to remove entire route and route row")
+    ): AppConfigHeadlessUnregisterUrlOutput
+        @resolver(class: "IDangerous\\AppConfig\\Model\\GraphQl\\Headless\\UnregisterHeadlessUrl")
+        @doc(description: "POST …/unregister-url. HMAC + session. Omit store_ids to delete all paths for this route.")
+
+    appConfigHeadlessDeleteJsonKeys(
+        keys: [String!]! @doc(description: "key_name values to delete (must use headless prefix; headless rows only)")
+    ): AppConfigHeadlessDeleteJsonKeysOutput
+        @resolver(class: "IDangerous\\AppConfig\\Model\\GraphQl\\Headless\\DeleteHeadlessJsonKeys")
+        @doc(description: "POST …/delete-json-keys. HMAC + session. Permanently removes headless JSON keys.")
 }

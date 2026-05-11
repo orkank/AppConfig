@@ -12,6 +12,56 @@
             <resource ref="anonymous"/>
         </resources>
     </route>
+
+    <route url="/V1/appconfig/headless/session/exchange" method="POST">
+        <service class="IDangerous\AppConfig\Api\HeadlessIntegrationInterface" method="exchangeSession"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/appconfig/headless/json" method="GET">
+        <service class="IDangerous\AppConfig\Api\HeadlessIntegrationInterface" method="getJson"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/appconfig/headless/url-routes" method="GET">
+        <service class="IDangerous\AppConfig\Api\HeadlessIntegrationInterface" method="listHeadlessUrlRoutes"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/appconfig/headless/json" method="POST">
+        <service class="IDangerous\AppConfig\Api\HeadlessIntegrationInterface" method="saveJson"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/appconfig/headless/register-url" method="POST">
+        <service class="IDangerous\AppConfig\Api\HeadlessIntegrationInterface" method="registerHeadlessUrl"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/appconfig/headless/unregister-url" method="POST">
+        <service class="IDangerous\AppConfig\Api\HeadlessIntegrationInterface" method="unregisterHeadlessUrl"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/appconfig/headless/delete-json-keys" method="POST">
+        <service class="IDangerous\AppConfig\Api\HeadlessIntegrationInterface" method="deleteHeadlessJsonKeys"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
 </routes>
 
 

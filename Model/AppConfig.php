@@ -6,6 +6,7 @@ namespace IDangerous\AppConfig\Model;
 use IDangerous\AppConfig\Api\AppConfigInterface;
 use IDangerous\AppConfig\Api\Data\ConfigDataFactory;
 use IDangerous\AppConfig\Api\Data\GroupDataFactory;
+use IDangerous\AppConfig\Model\Headless\Origin as HeadlessOrigin;
 use IDangerous\AppConfig\Model\ResourceModel\Group\CollectionFactory as GroupCollectionFactory;
 use IDangerous\AppConfig\Model\ResourceModel\KeyValue\CollectionFactory as KeyValueCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -149,6 +150,7 @@ class AppConfig implements AppConfigInterface
         // Join first, then add filters with table prefixes
         $keyValueCollection->joinGroup();
         $keyValueCollection->addFieldToFilter('main_table.is_active', 1);
+        $keyValueCollection->addFieldToFilter('main_table.origin', ['nin' => [HeadlessOrigin::HEADLESS]]);
 
         if ($groupCode) {
             $keyValueCollection->addFieldToFilter('group.code', $groupCode);
@@ -587,6 +589,10 @@ class AppConfig implements AppConfigInterface
                 continue;
             }
 
+            if ($group->getCode() === $this->headlessConfiguredGroupCode()) {
+                continue;
+            }
+
             $result[$group->getCode()] = [
                 'name' => $group->getName(),
                 'description' => $group->getDescription(),
@@ -609,6 +615,7 @@ class AppConfig implements AppConfigInterface
         $collection = $this->keyValueCollectionFactory->create();
         $collection->joinGroup();
         $collection->addFieldToFilter('main_table.is_active', 1);
+        $collection->addFieldToFilter('main_table.origin', ['nin' => [HeadlessOrigin::HEADLESS]]);
         $collection->addFieldToFilter('main_table.key_name', $key);
 
         if ($groupCode) {
@@ -725,6 +732,14 @@ class AppConfig implements AppConfigInterface
         }
 
         return null;
+    }
+
+    private function headlessConfiguredGroupCode(): string
+    {
+        return (string) $this->scopeConfig->getValue(
+            'appconfig/headless_integration/group_code',
+            ScopeInterface::SCOPE_STORE
+        ) ?: 'nextjs';
     }
 
     /**

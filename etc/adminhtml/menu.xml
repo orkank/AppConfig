@@ -15,6 +15,21 @@
              parent="IDangerous_AppConfig::appconfig"
              action="adminhtml/system_config/edit/section/appconfig"
              resource="IDangerous_AppConfig::config"/>
+        <add id="IDangerous_AppConfig::headless_launch"
+             title="Launch headless"
+             module="IDangerous_AppConfig"
+             sortOrder="12"
+             parent="IDangerous_AppConfig::appconfig"
+             action="appconfig/headless/launch"
+             resource="IDangerous_AppConfig::headless_integration"/>
+        <add id="IDangerous_AppConfig::headless_integration"
+             title="Headless Integration"
+             module="IDangerous_AppConfig"
+             sortOrder="17"
+             parent="IDangerous_AppConfig::appconfig"
+             action="appconfig/headless/index"
+             resource="IDangerous_AppConfig::headless_integration"/>
+
         <add id="IDangerous_AppConfig::groups"
              title="Groups"
              module="IDangerous_AppConfig"

@@ -37,6 +37,7 @@
         <column xsi:type="text" name="cms_pages_value" nullable="true" comment="CMS Pages Value (JSON array)"/>
         <column xsi:type="smallint" name="cms_include_content" padding="5" unsigned="true" nullable="false" default="0" comment="Include CMS page content in API output"/>
         <column xsi:type="smallint" name="is_active" padding="5" unsigned="true" nullable="false" default="1" comment="Is Active"/>
+        <column xsi:type="varchar" name="origin" nullable="false" length="16" default="admin" comment="Record origin: admin vs headless API"/>
         <column xsi:type="varchar" name="version" nullable="true" length="50" comment="Version (e.g., 4.0.10+80)"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
@@ -55,6 +56,50 @@
         </index>
         <index referenceId="IDANGEROUS_APPCONFIG_KEYVALUE_ACTIVE" indexType="btree">
             <column name="is_active"/>
+        </index>
+        <index referenceId="IDANGEROUS_APPCONFIG_KEYVALUE_ORIGIN" indexType="btree">
+            <column name="origin"/>
+        </index>
+    </table>
+
+    <table name="idangerous_appconfig_headless_route" resource="default" engine="innodb"
+           comment="App Config headless URL to key_name mapping">
+        <column xsi:type="int" name="route_id" padding="10" unsigned="true" nullable="false"
+                identity="true" comment="Route ID (url_rewrite.entity_id for this integration)"/>
+        <column xsi:type="varchar" name="appconfig_key" nullable="false" length="255"
+                comment="Target key_name in idangerous_appconfig_keyvalue"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="route_id"/>
+        </constraint>
+        <index referenceId="IDX_IDANG_APP_HL_ROUTE_KEY" indexType="btree">
+            <column name="appconfig_key"/>
+        </index>
+    </table>
+
+    <table name="idangerous_appconfig_headless_delegation" resource="default" engine="innodb"
+           comment="Single-use admin delegation codes for POST redirect to headless app">
+        <column xsi:type="int" name="delegation_id" padding="10" unsigned="true" nullable="false"
+                identity="true" comment="Delegation ID"/>
+        <column xsi:type="varchar" name="code_hash" nullable="false" length="64" comment="SHA256 hex of plain code"/>
+        <column xsi:type="int" name="admin_user_id" padding="10" unsigned="true" nullable="false"
+                comment="Magento admin user ID"/>
+        <column xsi:type="timestamp" name="expires_at" on_update="false" nullable="false"
+                comment="UTC expiry"/>
+        <column xsi:type="timestamp" name="used_at" on_update="false" nullable="true" comment="Consumed at"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="delegation_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="UNQ_IDANG_APP_HL_DELEGATION_HASH">
+            <column name="code_hash"/>
+        </constraint>
+        <index referenceId="IDX_IDANG_APP_HL_DELEGATION_EXPIRES" indexType="btree">
+            <column name="expires_at"/>
         </index>
     </table>
 </schema>
